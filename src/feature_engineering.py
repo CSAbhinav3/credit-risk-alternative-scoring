@@ -194,3 +194,59 @@ def fix_days_employed(df):
     print(f"DAYS_EMPLOYED placeholder replaced with NaN")
 
     return df
+
+def add_ratio_features(df):
+    """
+    Creates ratio and interaction features that contextualize raw amounts 
+    relative to the applicant's own financial profile - generally more 
+    predictive than raw amounts alone in credit scoring.
+
+    Uses AMT_INCOME_TOTAL (capped, pre-log version) and AMT_CREDIT (raw) 
+    as the base amounts, since ratios should be computed on actual values, 
+    not log-transformed ones.
+
+    DAYS_BIRTH and DAYS_EMPLOYED are negative-days-before-application 
+    (confirmed in EDA); converting to positive years here for interpretability.
+    """
+    df = df.copy()
+
+    # --- Financial ratios ---
+    # Credit-to-income: how large is the loan relative to what they earn?
+    df['CREDIT_INCOME_RATIO'] = df['AMT_CREDIT'] / df['AMT_INCOME_TOTAL']
+
+    # Annuity-to-income: what fraction of income goes to loan repayment?
+    df['ANNUITY_INCOME_RATIO'] = df['AMT_ANNUITY'] / df['AMT_INCOME_TOTAL']
+
+    # Credit-to-goods-price: is the loan larger than the goods being financed?
+    # (a loan amount well above goods price can signal added fees/risk)
+    df['CREDIT_GOODS_RATIO'] = df['AMT_CREDIT'] / df['AMT_GOODS_PRICE']
+
+    # Annuity-to-credit: implies the effective loan term/structure
+    df['ANNUITY_CREDIT_RATIO'] = df['AMT_ANNUITY'] / df['AMT_CREDIT']
+
+    # --- Age and employment, converted to interpretable years ---
+    df['AGE_YEARS'] = -df['DAYS_BIRTH'] / 365.25
+    df['EMPLOYED_YEARS'] = -df['DAYS_EMPLOYED'] / 365.25  # NaN for not-employed, as intended
+
+    # Employment length relative to age: a higher ratio suggests employed 
+    # for a larger fraction of adult life (stability signal)
+    df['EMPLOYED_AGE_RATIO'] = df['EMPLOYED_YEARS'] / df['AGE_YEARS']
+
+    # --- Family/household context ---
+    # Income per family member: total income may look fine, but a large 
+    # family changes what that income actually has to cover
+    df['INCOME_PER_PERSON'] = df['AMT_INCOME_TOTAL'] / df['CNT_FAM_MEMBERS']
+
+    new_cols = ['CREDIT_INCOME_RATIO', 'ANNUITY_INCOME_RATIO', 'CREDIT_GOODS_RATIO',
+                'ANNUITY_CREDIT_RATIO', 'AGE_YEARS', 'EMPLOYED_YEARS', 
+                'EMPLOYED_AGE_RATIO', 'INCOME_PER_PERSON']
+
+    print(f"Created {len(new_cols)} ratio/interaction features")
+    print(f"Checking for inf/extreme values:")
+    for col in new_cols:
+        n_inf = np.isinf(df[col]).sum()
+        n_null = df[col].isnull().sum()
+        if n_inf > 0 or n_null > 0:
+            print(f"  {col}: {n_inf} inf, {n_null} null")
+
+    return df
