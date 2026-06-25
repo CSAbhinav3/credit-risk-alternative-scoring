@@ -250,3 +250,82 @@ def add_ratio_features(df):
             print(f"  {col}: {n_inf} inf, {n_null} null")
 
     return df
+
+def aggregate_bureau(bureau_df):
+    """
+    Aggregates bureau.csv (credit bureau history, multiple rows per SK_ID_CURR)
+    into one row per applicant. 305,811 of 307,511 applicants (99.4%) have at
+    least one bureau record; the ~1,700 without any are the dataset's truest
+    "credit-invisible" cases - their absence after merging becomes a NaN flag,
+    same pattern as EXT_SOURCE missingness.
+
+    CREDIT_ACTIVE counts are pivoted into separate count columns, since 
+    "Active" vs "Closed" vs "Bad debt" carry very different risk meaning - 
+    averaging them together would destroy that distinction.
+    """
+    bureau_df = bureau_df.copy()
+
+    # --- Pivot CREDIT_ACTIVE into count-per-status columns ---
+    active_counts = pd.crosstab(bureau_df['SK_ID_CURR'], bureau_df['CREDIT_ACTIVE'])
+    active_counts.columns = ['BUREAU_STATUS_' + c.upper().replace(' ', '_') + '_COUNT' for c in active_counts.columns]
+
+    # --- Pivot CREDIT_TYPE into count-per-type columns (keep only common types to avoid sparse noise) ---
+    top_credit_types = bureau_df['CREDIT_TYPE'].value_counts().head(5).index
+    bureau_df['CREDIT_TYPE_GROUPED'] = bureau_df['CREDIT_TYPE'].where(
+        bureau_df['CREDIT_TYPE'].isin(top_credit_types), 'Other'
+    )
+    type_counts = pd.crosstab(bureau_df['SK_ID_CURR'], bureau_df['CREDIT_TYPE_GROUPED'])
+    type_counts.columns = ['BUREAU_TYPE_' + c.upper().replace(' ', '_') + '_COUNT' for c in type_counts.columns]
+
+    # --- Numeric aggregations ---
+    agg_funcs = {
+        'DAYS_CREDIT': ['min', 'max', 'mean'],
+        'DAYS_CREDIT_ENDDATE': ['min', 'max', 'mean'],
+        'DAYS_ENDDATE_FACT': ['min', 'max', 'mean'],
+        'DAYS_CREDIT_UPDATE': ['min', 'max', 'mean'],
+        'CREDIT_DAY_OVERDUE': ['max', 'mean'],
+        'AMT_CREDIT_MAX_OVERDUE': ['max', 'mean'],
+        'AMT_CREDIT_SUM_OVERDUE': ['max', 'mean', 'sum'],
+        'CNT_CREDIT_PROLONG': ['max', 'sum'],
+        'AMT_CREDIT_SUM': ['max', 'mean', 'sum'],
+        'AMT_CREDIT_SUM_DEBT': ['max', 'mean', 'sum'],
+        'AMT_CREDIT_SUM_LIMIT': ['max', 'mean', 'sum'],
+        'AMT_ANNUITY': ['max', 'mean', 'sum'],
+    }
+    numeric_agg = bureau_df.groupby('SK_ID_CURR').agg(agg_funcs)
+    numeric_agg.columns = ['BUREAU_' + '_'.join(col).upper() for col in numeric_agg.columns]
+
+    # --- Record count per applicant (how many bureau lines do they have at all) ---
+    record_count = bureau_df.groupby('SK_ID_CURR').size().rename('BUREAU_RECORD_COUNT')
+
+    # --- Combine everything ---
+    result = pd.concat([numeric_agg, active_counts, type_counts, record_count], axis=1)
+    result = result.reset_index()
+
+    print(f"Aggregated bureau.csv: {bureau_df['SK_ID_CURR'].nunique()} applicants -> {result.shape[0]} rows, {result.shape[1]} columns")
+
+    return result
+
+
+def merge_bureau_features(df, bureau_agg):
+    """
+    Left-merges aggregated bureau features onto the main applicant dataframe.
+    Applicants with no bureau record (left join, no match) get NaN across all 
+    bureau columns - this is preserved deliberately as a signal, not filled, 
+    since "no bureau history at all" is itself informative (the dataset's 
+    truest credit-invisible population).
+
+    Adds HAS_BUREAU_RECORD flag explicitly for convenience/clarity, since 
+    relying on implicit NaN-checking across 30+ columns is error-prone.
+    """
+    df = df.copy()
+    n_before = df.shape[1]
+
+    df = df.merge(bureau_agg, on='SK_ID_CURR', how='left')
+    df['HAS_BUREAU_RECORD'] = df['BUREAU_RECORD_COUNT'].notnull().astype(int)
+
+    n_no_bureau = (df['HAS_BUREAU_RECORD'] == 0).sum()
+    print(f"Merged bureau features: {df.shape[1] - n_before} new columns")
+    print(f"Applicants with NO bureau record: {n_no_bureau} ({n_no_bureau/len(df)*100:.2f}%)")
+
+    return df
