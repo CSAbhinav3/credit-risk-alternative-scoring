@@ -329,3 +329,135 @@ def merge_bureau_features(df, bureau_agg):
     print(f"Applicants with NO bureau record: {n_no_bureau} ({n_no_bureau/len(df)*100:.2f}%)")
 
     return df
+
+def aggregate_previous_application(prev_df):
+    """
+    Aggregates previous_application.csv (prior Home Credit loan applications,
+    multiple rows per SK_ID_CURR) into one row per applicant.
+
+    NAME_CONTRACT_STATUS pivoted into count columns (Approved/Refused/Canceled/
+    Unused offer carry very different risk meaning - a history of refusals is
+    a strong distinct signal, not safely averaged with approvals).
+
+    RATE_INTEREST_PRIMARY and RATE_INTEREST_PRIVILEGED excluded entirely - 
+    99.64% missing, essentially no signal to extract.
+    """
+    prev_df = prev_df.copy()
+
+    # --- Pivot NAME_CONTRACT_STATUS into count-per-status columns ---
+    status_counts = pd.crosstab(prev_df['SK_ID_CURR'], prev_df['NAME_CONTRACT_STATUS'])
+    status_counts.columns = ['PREV_STATUS_' + c.upper().replace(' ', '_') + '_COUNT' for c in status_counts.columns]
+
+    # --- Numeric aggregations ---
+    agg_funcs = {
+        'AMT_ANNUITY': ['max', 'mean'],
+        'AMT_APPLICATION': ['max', 'mean', 'sum'],
+        'AMT_CREDIT': ['max', 'mean', 'sum'],
+        'AMT_DOWN_PAYMENT': ['max', 'mean'],
+        'AMT_GOODS_PRICE': ['max', 'mean'],
+        'RATE_DOWN_PAYMENT': ['mean'],
+        'DAYS_DECISION': ['min', 'max', 'mean'],
+        'CNT_PAYMENT': ['max', 'mean'],
+        'DAYS_FIRST_DUE': ['min', 'max'],
+        'DAYS_LAST_DUE': ['min', 'max'],
+        'DAYS_TERMINATION': ['min', 'max'],
+    }
+    numeric_agg = prev_df.groupby('SK_ID_CURR').agg(agg_funcs)
+    numeric_agg.columns = ['PREV_' + '_'.join(col).upper() for col in numeric_agg.columns]
+
+    # --- Record count ---
+    record_count = prev_df.groupby('SK_ID_CURR').size().rename('PREV_APP_RECORD_COUNT')
+
+    # --- Refusal rate: a directly interpretable derived feature ---
+    refusal_rate = (status_counts.filter(like='REFUSED').sum(axis=1) / record_count).rename('PREV_REFUSAL_RATE')
+
+    result = pd.concat([numeric_agg, status_counts, record_count, refusal_rate], axis=1)
+    result = result.reset_index()
+
+    print(f"Aggregated previous_application.csv: {prev_df['SK_ID_CURR'].nunique()} applicants -> {result.shape[0]} rows, {result.shape[1]} columns")
+
+    return result
+
+
+def merge_previous_application_features(df, prev_agg):
+    """
+    Left-merges aggregated previous_application features onto the main 
+    applicant dataframe. Verifies ID overlap directly rather than assuming - 
+    this table, like bureau.csv, spans both train and test applicants combined.
+    """
+    df = df.copy()
+    n_before = df.shape[1]
+
+    df = df.merge(prev_agg, on='SK_ID_CURR', how='left')
+    df['HAS_PREV_APPLICATION'] = df['PREV_APP_RECORD_COUNT'].notnull().astype(int)
+
+    n_no_prev = (df['HAS_PREV_APPLICATION'] == 0).sum()
+    print(f"Merged previous_application features: {df.shape[1] - n_before} new columns")
+    print(f"Applicants with NO previous Home Credit application: {n_no_prev} ({n_no_prev/len(df)*100:.2f}%)")
+
+    return df
+
+def aggregate_installments(installments_df):
+    """
+    Aggregates installments_payments.csv (13.6M rows - the largest secondary
+    table, individual installment-level records) into one row per SK_ID_CURR.
+
+    Derives two key behavioral signals not present as raw columns:
+    - DAYS_LATE: DAYS_ENTRY_PAYMENT - DAYS_INSTALMENT (positive = paid late, 
+      negative/zero = paid on time or early)
+    - AMT_SHORTFALL: AMT_INSTALMENT - AMT_PAYMENT (positive = underpaid)
+
+    2,905 rows (0.02%) have NaN for DAYS_ENTRY_PAYMENT/AMT_PAYMENT - these are 
+    installments that were never paid at all, a stronger signal than "paid late".
+    Flagged explicitly via MISSED_PAYMENT before computing DAYS_LATE/AMT_SHORTFALL, 
+    so this signal isn't silently lost as NaN in the derived features.
+    """
+    df = installments_df.copy()
+
+    df['MISSED_PAYMENT'] = df['DAYS_ENTRY_PAYMENT'].isnull().astype(int)
+    df['DAYS_LATE'] = df['DAYS_ENTRY_PAYMENT'] - df['DAYS_INSTALMENT']
+    df['AMT_SHORTFALL'] = df['AMT_INSTALMENT'] - df['AMT_PAYMENT']
+
+    agg_funcs = {
+        'DAYS_LATE': ['max', 'mean'],
+        'AMT_SHORTFALL': ['max', 'mean', 'sum'],
+        'MISSED_PAYMENT': ['sum'],
+        'AMT_INSTALMENT': ['max', 'mean', 'sum'],
+        'AMT_PAYMENT': ['max', 'mean', 'sum'],
+        'NUM_INSTALMENT_NUMBER': ['max'],  # proxy for how many installments this loan had
+    }
+    numeric_agg = df.groupby('SK_ID_CURR').agg(agg_funcs)
+    numeric_agg.columns = ['INSTAL_' + '_'.join(col).upper() for col in numeric_agg.columns]
+
+    record_count = df.groupby('SK_ID_CURR').size().rename('INSTAL_RECORD_COUNT')
+
+    # Late-payment rate: a directly interpretable derived feature.
+    # Vectorized (no .apply()) - faster on 13.6M rows and avoids the 
+    # groupby-apply-on-grouping-column deprecation warning.
+    df['IS_LATE'] = (df['DAYS_LATE'] > 0).astype(int)
+    late_rate = df.groupby('SK_ID_CURR')['IS_LATE'].mean().rename('INSTAL_LATE_PAYMENT_RATE')
+
+    result = pd.concat([numeric_agg, record_count, late_rate], axis=1)
+    result = result.reset_index()
+
+    print(f"Aggregated installments_payments.csv: {df['SK_ID_CURR'].nunique()} applicants -> {result.shape[0]} rows, {result.shape[1]} columns")
+
+    return result
+
+
+def merge_installments_features(df, instal_agg):
+    """
+    Left-merges aggregated installment payment features onto the main 
+    applicant dataframe.
+    """
+    df = df.copy()
+    n_before = df.shape[1]
+
+    df = df.merge(instal_agg, on='SK_ID_CURR', how='left')
+    df['HAS_INSTALLMENT_HISTORY'] = df['INSTAL_RECORD_COUNT'].notnull().astype(int)
+
+    n_no_instal = (df['HAS_INSTALLMENT_HISTORY'] == 0).sum()
+    print(f"Merged installments features: {df.shape[1] - n_before} new columns")
+    print(f"Applicants with NO installment history: {n_no_instal} ({n_no_instal/len(df)*100:.2f}%)")
+
+    return df
