@@ -461,3 +461,67 @@ def merge_installments_features(df, instal_agg):
     print(f"Applicants with NO installment history: {n_no_instal} ({n_no_instal/len(df)*100:.2f}%)")
 
     return df
+
+def aggregate_pos_cash(pos_df):
+    """
+    Aggregates POS_CASH_balance.csv (monthly POS/cash loan balance snapshots)
+    into one row per SK_ID_CURR.
+
+    Verified against raw data:
+    - 9 NAME_CONTRACT_STATUS categories; Active (91.5%) + Completed (7.4%) dominate,
+      remaining 7 categories all <1% each -> grouped into 'Other'.
+    - SK_DPD / SK_DPD_DEF have no missing values, no placeholder-value trap.
+    - MONTHS_BALANCE must be sorted ascending per loan before taking 'last' snapshot,
+      since raw file is not guaranteed pre-sorted.
+    """
+    df = pos_df.copy()
+
+    # Sort so that within each SK_ID_PREV, rows go from earliest to most recent MONTHS_BALANCE.
+    # Required before any .agg('last') call -- confirmed via direct inspection that the
+    # raw file order cannot be trusted.
+    df = df.sort_values(['SK_ID_CURR', 'SK_ID_PREV', 'MONTHS_BALANCE'])
+
+    # Group rare statuses into 'Other' -- Active/Completed are the only categories >1%
+    top_statuses = ['Active', 'Completed']
+    df['STATUS_GROUPED'] = df['NAME_CONTRACT_STATUS'].where(
+        df['NAME_CONTRACT_STATUS'].isin(top_statuses), 'Other'
+    )
+    status_counts = pd.crosstab(df['SK_ID_CURR'], df['STATUS_GROUPED'])
+    status_counts.columns = [f'POS_STATUS_{c.upper()}_COUNT' for c in status_counts.columns]
+    status_counts = status_counts.reset_index()
+
+    # DPD-based flags -- vectorized rate computation, same fix applied to installments late-rate
+    df['IS_DPD'] = (df['SK_DPD'] > 0).astype(int)
+    df['IS_DPD_DEF'] = (df['SK_DPD_DEF'] > 0).astype(int)
+
+    numeric_agg = df.groupby('SK_ID_CURR').agg(
+        POS_MONTHS_BALANCE_COUNT=('MONTHS_BALANCE', 'count'),
+        POS_MONTHS_BALANCE_MIN=('MONTHS_BALANCE', 'min'),
+        POS_CNT_INSTALMENT_MEAN=('CNT_INSTALMENT', 'mean'),
+        POS_CNT_INSTALMENT_FUTURE_MEAN=('CNT_INSTALMENT_FUTURE', 'mean'),
+        POS_CNT_INSTALMENT_FUTURE_LAST=('CNT_INSTALMENT_FUTURE', 'last'),  # valid now that sort is enforced above
+        POS_SK_DPD_MEAN=('SK_DPD', 'mean'),
+        POS_SK_DPD_MAX=('SK_DPD', 'max'),
+        POS_SK_DPD_DEF_MEAN=('SK_DPD_DEF', 'mean'),
+        POS_SK_DPD_DEF_MAX=('SK_DPD_DEF', 'max'),
+        POS_DPD_RATE=('IS_DPD', 'mean'),
+        POS_DPD_DEF_RATE=('IS_DPD_DEF', 'mean'),
+        POS_LOAN_COUNT=('SK_ID_PREV', 'nunique'),
+    ).reset_index()
+
+    pos_agg = numeric_agg.merge(status_counts, on='SK_ID_CURR', how='left')
+
+    print(f"POS_CASH aggregated: {pos_agg.shape[0]} applicants, {pos_agg.shape[1]} columns")
+    return pos_agg
+
+
+def merge_pos_cash_features(df, pos_agg):
+    """Left-merges POS_CASH aggregated features onto train_fe. Adds HAS_POS_CASH_RECORD flag."""
+    before_cols = df.shape[1]
+    merged = df.merge(pos_agg, on='SK_ID_CURR', how='left')
+    merged['HAS_POS_CASH_RECORD'] = merged['POS_LOAN_COUNT'].notna().astype(int)
+
+    n_missing = merged['HAS_POS_CASH_RECORD'].eq(0).sum()
+    print(f"Applicants without POS_CASH record: {n_missing} ({n_missing/len(merged)*100:.2f}%)")
+    print(f"Shape: {before_cols} -> {merged.shape[1]}")
+    return merged
