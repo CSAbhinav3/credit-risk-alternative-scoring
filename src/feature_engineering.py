@@ -525,3 +525,70 @@ def merge_pos_cash_features(df, pos_agg):
     print(f"Applicants without POS_CASH record: {n_missing} ({n_missing/len(merged)*100:.2f}%)")
     print(f"Shape: {before_cols} -> {merged.shape[1]}")
     return merged
+
+def aggregate_bureau_balance(balance_df, bureau_df):
+    """
+    Aggregates bureau_balance.csv (27,299,925 monthly status rows, keyed by
+    SK_ID_BUREAU only) up to one row per SK_ID_CURR via a two-hop merge
+    through bureau.csv's SK_ID_BUREAU -> SK_ID_CURR mapping.
+
+    Verified against raw data:
+    - 54.89% of bureau.csv credit lines (942,074 of 1,716,428) have no
+      balance history at all -- expected dataset characteristic, not an error.
+    - STATUS has 8 categories: '0'-'5' (DPD severity buckets, 0=current,
+      5=worst/written off), 'C' (closed), 'X' (status unknown that month).
+    - The 43,041 SK_ID_BUREAU in bureau_balance.csv with no match in
+      bureau.csv are dropped naturally by the merge direction used here.
+    """
+    df = balance_df.copy()
+
+    # Pivot STATUS into count-per-category columns
+    status_counts = pd.crosstab(df['SK_ID_BUREAU'], df['STATUS'])
+    status_counts.columns = [f'BB_STATUS_{c}_COUNT' for c in status_counts.columns]
+    status_counts = status_counts.reset_index()
+
+    # Numeric DPD severity - only defined for '0'-'5', NaN for lines with only C/X months
+    numeric_mask = df['STATUS'].isin(['0', '1', '2', '3', '4', '5'])
+    df.loc[numeric_mask, 'STATUS_NUM'] = df.loc[numeric_mask, 'STATUS'].astype(int)
+    max_dpd = df.groupby('SK_ID_BUREAU')['STATUS_NUM'].max().rename('BB_MAX_DPD_STATUS')
+
+    # Ever-late rate (status 1-5) per bureau line, vectorized
+    df['IS_LATE'] = df['STATUS'].isin(['1', '2', '3', '4', '5']).astype(int)
+    late_rate = df.groupby('SK_ID_BUREAU')['IS_LATE'].mean().rename('BB_LATE_RATE')
+
+    months_agg = df.groupby('SK_ID_BUREAU').agg(
+        BB_MONTHS_COUNT=('MONTHS_BALANCE', 'count'),
+        BB_MONTHS_MIN=('MONTHS_BALANCE', 'min'),
+    ).reset_index()
+
+    # Combine to one row per SK_ID_BUREAU
+    balance_agg = months_agg.merge(status_counts, on='SK_ID_BUREAU', how='left')
+    balance_agg = balance_agg.merge(max_dpd, on='SK_ID_BUREAU', how='left')
+    balance_agg = balance_agg.merge(late_rate, on='SK_ID_BUREAU', how='left')
+
+    # Hop 2: attach SK_ID_CURR via bureau.csv, then roll up to applicant level
+    bureau_link = bureau_df[['SK_ID_CURR', 'SK_ID_BUREAU']]
+    linked = bureau_link.merge(balance_agg, on='SK_ID_BUREAU', how='left')
+
+    applicant_agg = linked.groupby('SK_ID_CURR').agg(
+        BB_MONTHS_COUNT_MEAN=('BB_MONTHS_COUNT', 'mean'),
+        BB_MONTHS_COUNT_SUM=('BB_MONTHS_COUNT', 'sum'),
+        BB_LATE_RATE_MEAN=('BB_LATE_RATE', 'mean'),
+        BB_LATE_RATE_MAX=('BB_LATE_RATE', 'max'),
+        BB_MAX_DPD_STATUS_MAX=('BB_MAX_DPD_STATUS', 'max'),
+    ).reset_index()
+
+    print(f"bureau_balance aggregated: {applicant_agg.shape[0]} applicants, {applicant_agg.shape[1]} columns")
+    return applicant_agg
+
+
+def merge_bureau_balance_features(df, bb_agg):
+    """Left-merges bureau_balance-derived features onto train_fe. Adds HAS_BUREAU_BALANCE flag."""
+    before_cols = df.shape[1]
+    merged = df.merge(bb_agg, on='SK_ID_CURR', how='left')
+    merged['HAS_BUREAU_BALANCE'] = merged['BB_MONTHS_COUNT_MEAN'].notna().astype(int)
+
+    n_missing = merged['HAS_BUREAU_BALANCE'].eq(0).sum()
+    print(f"Applicants without bureau_balance history: {n_missing} ({n_missing/len(merged)*100:.2f}%)")
+    print(f"Shape: {before_cols} -> {merged.shape[1]}")
+    return merged
