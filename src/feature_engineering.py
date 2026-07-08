@@ -592,3 +592,57 @@ def merge_bureau_balance_features(df, bb_agg):
     print(f"Applicants without bureau_balance history: {n_missing} ({n_missing/len(merged)*100:.2f}%)")
     print(f"Shape: {before_cols} -> {merged.shape[1]}")
     return merged
+
+def aggregate_credit_card_balance(cc_df):
+    df = cc_df.copy()
+
+    # Verified structural zeros (checked against AMT_DRAWINGS_CURRENT / AMT_PAYMENT_TOTAL_CURRENT / per-loan null pattern)
+    zero_fill_cols = [
+        'AMT_DRAWINGS_ATM_CURRENT', 'AMT_DRAWINGS_POS_CURRENT', 'AMT_DRAWINGS_OTHER_CURRENT',
+        'CNT_DRAWINGS_ATM_CURRENT', 'CNT_DRAWINGS_POS_CURRENT', 'CNT_DRAWINGS_OTHER_CURRENT',
+        'AMT_PAYMENT_CURRENT', 'CNT_INSTALMENT_MATURE_CUM', 'AMT_INST_MIN_REGULARITY'
+    ]
+    df[zero_fill_cols] = df[zero_fill_cols].fillna(0)
+
+    # NAME_CONTRACT_STATUS grouping: Active/Completed/Other (same as POS_CASH)
+    df['CONTRACT_STATUS_GROUPED'] = df['NAME_CONTRACT_STATUS'].apply(
+        lambda x: x if x in ['Active', 'Completed'] else 'Other'
+    )
+
+    # Explicit sort before any .last() snapshot — raw file confirmed unsorted
+    df = df.sort_values(['SK_ID_PREV', 'MONTHS_BALANCE'])
+
+    # Utilization ratio, guarding against zero/NaN credit limit
+    df['UTILIZATION_RATIO'] = df['AMT_BALANCE'] / df['AMT_CREDIT_LIMIT_ACTUAL'].replace(0, np.nan)
+
+    # --- Aggregate to one row per SK_ID_CURR ---
+    agg = df.groupby('SK_ID_CURR').agg(
+        CC_MONTHS_COUNT=('MONTHS_BALANCE', 'count'),
+        CC_BALANCE_MEAN=('AMT_BALANCE', 'mean'),
+        CC_BALANCE_LAST=('AMT_BALANCE', 'last'),
+        CC_CREDIT_LIMIT_MEAN=('AMT_CREDIT_LIMIT_ACTUAL', 'mean'),
+        CC_CREDIT_LIMIT_LAST=('AMT_CREDIT_LIMIT_ACTUAL', 'last'),
+        CC_UTILIZATION_MEAN=('UTILIZATION_RATIO', 'mean'),
+        CC_UTILIZATION_LAST=('UTILIZATION_RATIO', 'last'),
+        CC_DRAWINGS_ATM_SUM=('AMT_DRAWINGS_ATM_CURRENT', 'sum'),
+        CC_DRAWINGS_POS_SUM=('AMT_DRAWINGS_POS_CURRENT', 'sum'),
+        CC_DRAWINGS_OTHER_SUM=('AMT_DRAWINGS_OTHER_CURRENT', 'sum'),
+        CC_PAYMENT_CURRENT_MEAN=('AMT_PAYMENT_CURRENT', 'mean'),
+        CC_RECEIVABLE_PRINCIPAL_LAST=('AMT_RECEIVABLE_PRINCIPAL', 'last'),
+        CC_TOTAL_RECEIVABLE_LAST=('AMT_TOTAL_RECEIVABLE', 'last'),
+        CC_DPD_MEAN=('SK_DPD', 'mean'),
+        CC_DPD_MAX=('SK_DPD', 'max'),
+        CC_DPD_DEF_MEAN=('SK_DPD_DEF', 'mean'),
+        CC_DPD_DEF_MAX=('SK_DPD_DEF', 'max'),
+        CC_COMPLETED_RATE=('CONTRACT_STATUS_GROUPED', lambda s: (s == 'Completed').mean()),
+    ).reset_index()
+
+    return agg
+
+def merge_credit_card_balance_features(df, cc_agg):
+    before_shape = df.shape
+    merged = df.merge(cc_agg, on='SK_ID_CURR', how='left')
+    no_cc_record = merged['CC_MONTHS_COUNT'].isnull().sum()
+    print(f"Applicants with no credit_card_balance record: {no_cc_record} ({no_cc_record/len(merged)*100:.2f}%)")
+    print(f"Shape: {before_shape} -> {merged.shape}")
+    return merged
