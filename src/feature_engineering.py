@@ -647,3 +647,40 @@ def merge_credit_card_balance_features(df, cc_agg):
     print(f"Applicants with no credit_card_balance record: {no_cc_record} ({no_cc_record/len(merged)*100:.2f}%)")
     print(f"Shape: {before_shape} -> {merged.shape}")
     return merged
+
+def drop_zero_variance_features(df):
+    """
+    Drops the 10 zero-variance / near-constant features confirmed during the
+    Phase 2 feature-selection pre-check:
+    - 9 `_nan` dummy columns produced by one_hot_encode_remaining's dummy_na=True,
+      each exactly constant (nunique(dropna=False) == 1) because their source
+      column has zero missingness. Note: pandas .var()==0 / numeric_only=True
+      silently misses these -- they're bool dtype, excluded by
+      select_dtypes(include='number'). Confirmed instead via
+      nunique(dropna=False) == 1, which is dtype-agnostic.
+    - FLAG_MOBIL: not exactly constant (1 differing row out of 307,505 -
+      99.9997% dominant), but confirmed 0.0 permutation importance in a
+      baseline Random Forest, same as the 9 _nan columns -- safe to drop as
+      near-constant even though it isn't technically exact-zero-variance.
+
+    Deliberately does NOT touch FLAG_DOCUMENT_* columns, even the low-variance
+    ones among them -- kept per project decision, since tree models can
+    extract non-linear/interaction signal from them that marginal variance
+    alone doesn't capture.
+    """
+    df = df.copy()
+
+    zero_variance_cols = [
+        'CODE_GENDER_nan', 'FLAG_OWN_CAR_nan', 'FLAG_OWN_REALTY_nan',
+        'NAME_CONTRACT_TYPE_nan', 'NAME_EDUCATION_TYPE_nan', 'NAME_FAMILY_STATUS_nan',
+        'NAME_HOUSING_TYPE_nan', 'NAME_INCOME_TYPE_nan', 'WEEKDAY_APPR_PROCESS_START_nan',
+        'FLAG_MOBIL',
+    ]
+    present = [c for c in zero_variance_cols if c in df.columns]
+    missing = [c for c in zero_variance_cols if c not in df.columns]
+    if missing:
+        print(f"WARNING: expected zero-variance columns not found in df: {missing}")
+
+    df = df.drop(columns=present)
+    print(f"Dropped {len(present)} zero-variance/near-constant columns: {present}")
+    return df
