@@ -637,6 +637,7 @@ def aggregate_credit_card_balance(cc_df):
         CC_COMPLETED_RATE=('CONTRACT_STATUS_GROUPED', lambda s: (s == 'Completed').mean()),
     ).reset_index()
 
+    print(f"credit_card_balance aggregated: {agg.shape[0]} applicants, {agg.shape[1]} columns")
     return agg
 
 def merge_credit_card_balance_features(df, cc_agg):
