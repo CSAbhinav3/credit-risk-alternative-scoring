@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy import stats, optimize
 
 """
@@ -53,24 +54,87 @@ def fit_lognormal_mean_percentile(target_mean, target_pctile_value, pctile, root
     return mu, sigma
 
 
-def fit_p2m_params():
+def truncated_lognormal_percentile(mu, sigma, cap, p):
+    """
+    F_trunc^-1(p) for X ~ LogNormal(mu, sigma) truncated to X <= cap - i.e. the
+    p-th percentile of the CONDITIONAL distribution given X<=cap, not of the
+    unconditional one. Needed because re-solving mu alone to fix a truncated
+    mean shifts every percentile of the untruncated distribution (including
+    p86) right along with it - checking dist.ppf(0.86) on the shifted
+    (mu, sigma) is the wrong quantity; this is the right one.
+
+    P(X<=x | X<=cap) = p  <=>  Phi((ln x - mu)/sigma) = p * Phi(z_cap)
+    """
+    z_cap = (np.log(cap) - mu) / sigma
+    inner = p * stats.norm.cdf(z_cap)
+    if inner >= 1:
+        return np.inf
+    z_p = stats.norm.ppf(inner)
+    return np.exp(mu + sigma * z_p)
+
+
+def fit_p2m_params(cap=None):
     """
     P2M ticket size: both constraints are real RBI-derived figures
     (ATS=Rs.659, 86th percentile=Rs.500 - see stats doc Sec. 2-3), so this is
     an exact solve, not an assumption. The other algebraic root gives a
     negative sigma (invalid), so mu=3.630972, sigma=2.391548 is the unique
-    valid solution, confirmed in notebooks/03_synthetic_upi.ipynb.
+    valid solution when cap=None (untruncated), confirmed in
+    notebooks/03_synthetic_upi.ipynb.
 
-    NOTE - implied median is ~Rs.38: forcing one log-normal through both the
-    mean and the 86th percentile simultaneously pushes over half the
-    distribution below Rs.38, with a long tail pulling the mean up to 659.
-    This is a direct, unavoidable consequence of the two constraints, not an
-    extra assumption layered on top - flag it wherever this fit is cited
-    (e.g. thesis methodology) so it isn't a surprise later.
+    NOTE - implied median is ~Rs.38 (cap=None case): forcing one log-normal
+    through both the mean and the 86th percentile simultaneously pushes over
+    half the distribution below Rs.38, with a long tail pulling the mean up
+    to 659. This is a direct, unavoidable consequence of the two constraints,
+    not an extra assumption layered on top - flag it wherever this fit is
+    cited (e.g. thesis methodology) so it isn't a surprise later.
+
+    cap: BUG FOUND AND FIXED - cap=None (the original design) is only safe in
+    percentile terms (p99.9~Rs.61,170, well under every published ceiling),
+    but a log-normal's tail is unbounded, and at production scale (11.7M P2M
+    draws in the full 307,505-applicant run) the realized max was
+    Rs.1.24 CRORE - ~12x even the highest cited P2M ceiling. Confirmed the
+    naive fix (resample-above-cap using the untruncated mu/sigma unchanged)
+    is not good enough either: even a 0.05%-of-draws resample fraction drags
+    the sample mean down 18% (659->538, cap=Rs.1L) - the same
+    heavy-tail-carries-disproportionate-mean-weight effect as the original
+    P2P bug. A mu-only re-solve (mirroring the P2P fix) doesn't work here
+    either, because P2M has TWO real constraints, not one: re-solving mu
+    alone to hit the truncated mean drags the truncated p86 off-target too
+    (tested: p86 drifted to Rs.632 at cap=Rs.1L when only mu moved).
+
+    Fix: when cap is given, jointly re-solve BOTH mu and sigma via
+    scipy.optimize.fsolve so the TRUNCATED distribution hits both
+    E[X|X<=cap]=659 and the truncated 86th percentile=500 simultaneously
+    (see truncated_lognormal_mean and truncated_lognormal_percentile).
+    Converges cleanly for any reasonable cap, e.g. cap=300,000 (this
+    project's default, see generate_p2m_amounts) gives mu=3.530206,
+    sigma=2.485975, P(X>cap)=0.013% pre-resample.
+
+    Pass cap=None to get the original untruncated exact fit (e.g. for
+    reference/analysis); pass the same cap used by the amount generator
+    downstream to get parameters consistent with what will actually be
+    sampled and resampled.
     """
-    return fit_lognormal_mean_percentile(
+    if cap is None:
+        return fit_lognormal_mean_percentile(
+            target_mean=659, target_pctile_value=500, pctile=0.86, root="larger"
+        )
+
+    mu0, sigma0 = fit_lognormal_mean_percentile(
         target_mean=659, target_pctile_value=500, pctile=0.86, root="larger"
     )
+
+    def equations(params):
+        mu, sigma = params
+        eq1 = truncated_lognormal_mean(mu, sigma, cap) - 659
+        eq2 = truncated_lognormal_percentile(mu, sigma, cap, 0.86) - 500
+        return [eq1, eq2]
+
+    (mu, sigma), infodict, ier, msg = optimize.fsolve(equations, x0=[mu0, sigma0], full_output=True, xtol=1e-12)
+    if ier != 1:
+        raise RuntimeError(f"fit_p2m_params: truncated joint solve did not converge for cap={cap}: {msg}")
+    return mu, sigma
 
 
 def truncated_lognormal_mean(mu, sigma, cap):
@@ -130,26 +194,47 @@ def fit_p2p_params(cap=100_000, target_mean=2812, sigma_p2m=None, bracket=(0.1, 
     return mu, sigma
 
 
-def generate_p2m_amounts(n, cap=None, random_state=None):
+def generate_p2m_amounts(n, cap=300_000, random_state=None):
     """
-    Sample n P2M transaction amounts from the fitted log-normal
-    (see fit_p2m_params for the derivation and the ~Rs.38-median caveat).
+    Sample n P2M transaction amounts from the fitted log-normal, by
+    RESAMPLING any draw above cap rather than clipping it (same reasoning as
+    P2P: clipping creates an artificial point-mass spike at exactly cap).
 
-    cap: optional hard ceiling to clip at (Rs). The stats doc's general P2M
-    ceiling is ambiguous (Rs.1-5 lakh depending on category, or up to
-    Rs.10 lakh/day for select verified merchants as of Sept 2025 - Sec. 5),
-    so no single value is applied by default. In practice the fitted
-    distribution's own p99.9 (~Rs.61,170) already sits below every published
-    ceiling, so clipping is optional here, unlike P2P.
+    cap defaults to Rs.3,00,000 - the MIDPOINT of the stats doc's general P2M
+    range (Rs.1-5 lakh depending on category, Sec. 5). No single figure is
+    published; the doc's other number (up to Rs.10 lakh/DAY for select
+    verified merchants as of Sept 2025) is a daily aggregate limit, not a
+    per-transaction one, so it isn't comparable and wasn't used to anchor
+    this. Document this as a flagged assumption wherever cap is cited, same
+    pattern as the P2P cap.
+
+    cap=None (the ORIGINAL design) is a confirmed BUG, not a valid option to
+    reach for casually: it only checked that p99.9 (~Rs.61,170) sits under
+    every ceiling, but a log-normal's tail is unbounded, and at production
+    scale (11.7M draws) the realized max was Rs.1.24 CRORE. See
+    fit_p2m_params's docstring for the full diagnosis, including why a
+    mu-only re-solve doesn't work (breaks the p86 constraint) and why the
+    fix needs a joint (mu, sigma) re-solve under truncation.
+
+    Calls fit_p2m_params(cap=cap) (not cap=None) so the sampled distribution
+    is the truncation-corrected one - its untruncated mean/p86 no longer
+    equal 659/500 by themselves, but the post-resample values do.
     """
-    mu, sigma = fit_p2m_params()
+    mu, sigma = fit_p2m_params(cap=cap)
     dist = stats.lognorm(s=sigma, scale=np.exp(mu))
-    samples = dist.rvs(size=n, random_state=random_state)
+    rng = np.random.default_rng(random_state)
 
+    samples = dist.rvs(size=n, random_state=rng)
+    n_resampled = 0
     if cap is not None:
-        n_clipped = (samples > cap).sum()
-        samples = np.clip(samples, None, cap)
-        print(f"P2M: clipped {n_clipped} ({n_clipped/n*100:.4f}%) draws to cap={cap}")
+        mask = samples > cap
+        while mask.any():
+            n_resampled += mask.sum()
+            samples[mask] = dist.rvs(size=mask.sum(), random_state=rng)
+            mask = samples > cap
+        print(f"P2M: resampled {n_resampled} draw(s) ({n_resampled/n*100:.4f}% of n) that exceeded "
+              f"cap={cap}; final mean={samples.mean():.1f} (target ATS=659), "
+              f"max={samples.max():.1f} (< cap, no point mass)")
 
     return samples
 
@@ -294,7 +379,7 @@ def split_p2m_p2p_counts(counts, p_p2m=0.635, random_state=None):
 
 
 def generate_applicant_turnover(n_applicants, lam_month=20, n_months=3, p_p2m=0.635,
-                                 var_mean_ratio=2.0, cap_p2p=100_000, random_state=None):
+                                 var_mean_ratio=2.0, cap_p2m=300_000, cap_p2p=100_000, random_state=None):
     """
     Convenience/validation wrapper: draw each applicant's total transaction
     count, split into P2M/P2P, sample amounts for each, and sum to a single
@@ -303,9 +388,16 @@ def generate_applicant_turnover(n_applicants, lam_month=20, n_months=3, p_p2m=0.
     This is the function used to income-anchor lam_month (see
     fit_count_params) and to produce the Monte Carlo validation numbers in
     notebooks/03_synthetic_upi.ipynb. Not itself part of the eventual merge
-    step - that will need per-transaction rows (for SDV), not just a summed
-    total - but useful for any future plausibility re-check against
-    train_fe features.
+    step - that needs per-transaction rows (see generate_upi_transactions),
+    not just a summed total - but useful for any future plausibility re-check
+    against train_fe features.
+
+    cap_p2m defaults to Rs.3,00,000 (see generate_p2m_amounts) - the original
+    lam_month=20 income-anchoring was validated before this cap existed
+    (cap=None was a bug, see fit_p2m_params); re-confirmed after the fix that
+    the median turnover ratio is unchanged (both P2M constraints are
+    re-solved to hit the same 659/500 targets under truncation, so aggregate
+    behavior barely moves - only the impossible tail is removed).
     """
     rng = np.random.default_rng(random_state)
     counts = generate_transaction_counts(n_applicants, lam_month=lam_month, n_months=n_months,
@@ -316,10 +408,90 @@ def generate_applicant_turnover(n_applicants, lam_month=20, n_months=3, p_p2m=0.
     total_p2m = n_p2m.sum()
     total_p2p = n_p2p.sum()
     if total_p2m > 0:
-        p2m_amounts = generate_p2m_amounts(total_p2m, random_state=rng)
+        p2m_amounts = generate_p2m_amounts(total_p2m, cap=cap_p2m, random_state=rng)
         np.add.at(turnovers, np.repeat(np.arange(n_applicants), n_p2m), p2m_amounts)
     if total_p2p > 0:
         p2p_amounts = generate_p2p_amounts(total_p2p, cap=cap_p2p, random_state=rng)
         np.add.at(turnovers, np.repeat(np.arange(n_applicants), n_p2p), p2p_amounts)
 
     return turnovers
+
+
+def generate_upi_transactions(sk_id_curr, lam_month=20, n_months=3, p_p2m=0.635,
+                               var_mean_ratio=2.0, cap_p2m=300_000, cap_p2p=100_000, random_state=None):
+    """
+    Generate one row per synthetic UPI transaction for the given applicant IDs
+    - the per-transaction table needed for the eventual merge onto train_fe
+    (unlike generate_applicant_turnover, which only returns a summed total).
+
+    NOT built with SDV, despite CLAUDE.md's original Track B roadmap naming
+    it. SDV's synthesizers (GaussianCopula, CTGAN, multi-table HMA) all work
+    by fitting a model to a REAL sample and learning its column distributions/
+    correlations/cardinality from that data. There is no real UPI microdata
+    here to fit on - every distribution in this module is calibrated directly
+    from RBI aggregate figures (or income-anchored, see fit_count_params), not
+    learned from rows. The only way to use SDV here would be to generate a
+    seed dataset from these same closed-form generators, fit an SDV
+    synthesizer to that seed, then sample from SDV instead - strictly worse
+    than sampling directly, since it only adds approximation error and an
+    opaque model in between the audited calibration and the output, for zero
+    benefit. Referential integrity (which SK_ID_CURR owns which rows) is
+    exact by construction here (sk_id_curr is repeated by its own generated
+    count), not inferred - so SDV's multi-table cardinality-learning
+    machinery has nothing to add either. Revisit if a real dataset with
+    genuine joint structure (e.g. income/region correlated with payment
+    behavior) ever surfaces for the deferred income/region-tier merge step -
+    that is the scenario SDV is actually built for.
+
+    Columns:
+        SK_ID_CURR   int32        real applicant ID, repeated by its count
+        TXN_TYPE     category     'P2M' or 'P2P'
+        AMOUNT       float32      transaction amount (Rs.)
+        MONTH_INDEX  int8         1..n_months, uniform-random within the
+                                   window (RBI's growth-trend note, stats doc
+                                   Sec. 6, is a multi-year national trend, not
+                                   something meaningful to simulate inside a
+                                   single applicant's n_months window, so no
+                                   within-window trend is imposed)
+
+    Scale note: at the locked defaults (lam_month=20, n_months=3) this is
+    ~60 rows/applicant, e.g. ~18.4M rows for all 307,505 train_fe applicants.
+    Sorted by SK_ID_CURR on return. Caller should save as Parquet, not CSV,
+    at that scale.
+    """
+    sk_id_curr = np.asarray(sk_id_curr)
+    n_applicants = len(sk_id_curr)
+    rng = np.random.default_rng(random_state)
+
+    counts = generate_transaction_counts(n_applicants, lam_month=lam_month, n_months=n_months,
+                                          var_mean_ratio=var_mean_ratio, random_state=rng)
+    n_p2m, n_p2p = split_p2m_p2p_counts(counts, p_p2m=p_p2m, random_state=rng)
+    n_zero = (counts == 0).sum()
+    if n_zero > 0:
+        print(f"NOTE: {n_zero} applicant(s) drew 0 transactions and will have no rows below")
+
+    total_p2m = int(n_p2m.sum())
+    total_p2p = int(n_p2p.sum())
+
+    p2m_amounts = generate_p2m_amounts(total_p2m, cap=cap_p2m, random_state=rng) if total_p2m > 0 else np.array([])
+    p2p_amounts = generate_p2p_amounts(total_p2p, cap=cap_p2p, random_state=rng) if total_p2p > 0 else np.array([])
+
+    ids = np.concatenate([np.repeat(sk_id_curr, n_p2m), np.repeat(sk_id_curr, n_p2p)])
+    types = np.concatenate([np.full(total_p2m, "P2M"), np.full(total_p2p, "P2P")])
+    amounts = np.concatenate([p2m_amounts, p2p_amounts])
+    months = rng.integers(1, n_months + 1, size=total_p2m + total_p2p)
+
+    df = pd.DataFrame({
+        "SK_ID_CURR": ids.astype(np.int32),
+        "TXN_TYPE": pd.Categorical(types, categories=["P2M", "P2P"]),
+        "AMOUNT": amounts.astype(np.float32),
+        "MONTH_INDEX": months.astype(np.int8),
+    })
+    df = df.sort_values("SK_ID_CURR", kind="mergesort").reset_index(drop=True)
+
+    print(f"generate_upi_transactions: {len(df):,} rows for {n_applicants:,} applicants "
+          f"({len(df)/n_applicants:.1f} txns/applicant avg), "
+          f"P2M/P2P split = {(types=='P2M').mean()*100:.1f}%/{(types=='P2P').mean()*100:.1f}%, "
+          f"memory = {df.memory_usage(deep=True).sum()/1e6:.1f} MB")
+
+    return df

@@ -57,7 +57,7 @@ Full literature review, hypotheses, and framing live in the research proposal do
 |---|---|
 | 0 — Setup | ✅ Complete |
 | 1 — EDA | ✅ Complete |
-| 2 — Feature Engineering | ✅ Track A complete (incl. feature selection); Track B not started |
+| 2 — Feature Engineering | ✅ Track A complete (incl. feature selection); Track B in progress |
 | 3 — Modelling | Not started |
 | 4 — SHAP Explainability | Not started |
 | 5 — Fairness Audit | Not started |
@@ -200,7 +200,7 @@ All post row-drop-fix (N=307,505), reprinted directly from the notebook's curren
 
 ## What's left in Phase 2
 - **Track A: fully closed.** All six auxiliary tables merged, row-drop fix applied, stale cells removed, feature selection done. No outstanding items.
-- **Track B (not started)**: gather RBI DPSS aggregate stats → define marginal distributions for synthetic UPI features → generate ~307K synthetic rows via SDV → validate against RBI aggregates → merge onto Home Credit applicants conditional on income/region tier → document the calibrated-not-learned limitation explicitly.
+- **Track B (in progress)**: gather RBI DPSS aggregate stats → define marginal distributions for synthetic UPI features → generate ~307K synthetic rows → validate against RBI aggregates → merge onto Home Credit applicants conditional on income/region tier → document the calibrated-not-learned limitation explicitly. Row generation is direct composition of the closed-form/income-anchored generators in `src/synthetic_upi.py`, **not SDV** — SDV's synthesizers all work by fitting a model to real sample data, and there is no real UPI microdata here to fit on (everything is calibrated to RBI aggregates or income-anchored instead); using it would mean fitting a synthesizer to a seed dataset generated from these same closed-form functions, which only adds approximation error for no benefit. Revisit SDV specifically if/when a real dataset with genuine joint structure (e.g. income/region correlated with payment behavior) is found for the still-deferred income/region-tier merge step — that correlation-learning scenario is what SDV is actually built for. See `notebooks/03_synthetic_upi.ipynb` for the full derivation.
 - **Optional/low-priority**: markdown section ordering in `02_feature_engineering.ipynb` is scrambled near the top (section "1" appears before section "0"; the credit_card_balance summary sits near the top instead of the end). Cosmetic only, flagged in an audit pass, not yet fixed — do only if there's spare time before review.
 
 ## After this file goes stale
