@@ -32,12 +32,16 @@ credit-risk-alternative-scoring/
 ├── data/
 │   ├── raw/home-credit-default-risk/   ← all 9 Home Credit CSVs (gitignored)
 │   ├── processed/                       ← engineered features saved here later
-│   └── synthetic/                       ← synthetic UPI data saved here later
+│   └── synthetic/
+│       └── upi_transactions.parquet     ← 18.45M synthetic UPI txn rows (Track B, see below)
 ├── notebooks/
 │   ├── 01_eda.ipynb                     ← Phase 1: complete
-│   └── 02_feature_engineering.ipynb     ← Phase 2: Track A complete
+│   ├── 02_feature_engineering.ipynb     ← Phase 2: Track A complete
+│   └── 03_synthetic_upi.ipynb           ← Phase 2: Track B in progress (amount fits, count-mix, row gen)
 ├── src/
-│   └── feature_engineering.py           ← reusable pipeline functions
+│   ├── feature_engineering.py           ← Track A pipeline functions
+│   └── synthetic_upi.py                 ← Track B synthetic UPI generators
+├── rbi_dpss_upi_stats.md                ← RBI DPSS/NPCI aggregate stats, Track B calibration source
 ├── dashboard/
 ├── figures/
 ├── reports/
@@ -77,8 +81,62 @@ Row-drop fix, stale-cell cleanup, and feature selection are all resolved and ver
 
 **Final verified `train_fe.shape`: `(307505, 294)`** — confirmed via Restart Kernel → Run All Cells, sequential execution 1→47, zero errors, zero leftover diagnostic cells.
 
-### Next up — Track B
-Gather RBI DPSS aggregate statistics and begin synthetic UPI data generation (see "What's left" below for the full breakdown).
+### 🔶 Track B — in progress
+RBI stats gathered, both amount distributions fitted (with a real bug found and fixed), the
+transaction count/split mix fitted and income-anchored, and per-transaction row generation done and
+saved. Not yet done: income/region-tier correlation injection and the merge onto `train_fe`.
+
+**RBI stats**: `rbi_dpss_upi_stats.md` — P2M ATS=₹659, 86th percentile=₹500; P2P ATS=₹2,812, capped
+at ₹1,00,000/txn (confirmed unchanged); P2M/P2P volume split ~63–64%/36–37% (current era); P2M
+general ceiling ambiguous (₹1–5 lakh depending on category, or ₹10 lakh/**day** for select verified
+merchants — a daily aggregate, not comparable to a per-transaction limit).
+
+**P2M amount fit**: exact closed-form solve, both constraints real (ATS + p86) →
+`mu=3.630972, sigma=2.391548` untruncated. Implied median ~₹38 — a direct, unavoidable consequence
+of the two-constraint fit, not a separate assumption.
+
+**P2M cap bug (found and fixed)**: original `cap=None` design reasoned only in percentile terms
+(p99.9≈₹61,170, under every ceiling) — but at production scale (11.7M draws) the realized max hit
+₹1.24 CRORE, since a log-normal's tail is unbounded. Naive resample-above-cap (unchanged mu/sigma)
+still drags the mean down 18% at just 0.05% resampled. A mu-only re-solve (mirroring the P2P fix
+below) breaks the p86 constraint instead (drifts to ₹628 at cap=₹1L) — P2M has two real constraints,
+not one, so a single free parameter can't fix truncated-mean without corrupting truncated-p86. Fix:
+jointly re-solve **both** mu and sigma so the truncated distribution hits both targets at once
+(`fit_p2m_params(cap=...)`, `truncated_lognormal_percentile`). Locked **cap=₹3,00,000** (midpoint of
+the ambiguous ₹1–5 lakh range — flagged assumption, documented in the docstring) →
+`mu=3.530206, sigma=2.485975`, resample-above-cap (not clip, to avoid a point-mass spike).
+
+**P2P amount fit**: no independent RBI shape evidence exists (only ATS is real). Cap-as-percentile
+was tested at p99/99.5/99.9/99.99 and rejected (infeasible or absurd near-zero medians). Shape
+borrowed from P2M's sigma instead (flagged assumption). First version matched the *untruncated*
+mean to 2812 — wrong, since the real ATS is already a post-cap observed figure; clipping then left
+the post-clip mean ~26% short. Fixed the same way as P2M: re-solved mu so the **truncated** mean
+(conditional on X≤cap) hits 2812 exactly → `mu=5.753896, sigma=2.391548` (sigma unchanged from the
+shape-borrow). Resample-above-cap at ₹1,00,000. Validated at N=307,505: mean 2807.97 vs target 2812.
+
+**Count/split mix**: total transaction count per applicant ~ Negative Binomial (overdispersed, not
+Poisson), λ=**20/month** over **n_months=3** (explicit visible default). No RBI figure gives
+individual transaction frequency at all — λ is **income-anchored**, not independently sourced:
+blended ATS at the 0.635/0.365 mix = ₹1,444.84/txn, and λ=20 implies median simulated monthly UPI
+turnover ≈2.0x `train_fe`'s median monthly income (`AMT_INCOME_TOTAL`/12 = ₹12,262.50) — read as
+"money recycles through UPI about twice a month," plausible without being extreme. Confirmed the
+mean-based estimate (2.36x) and median-based estimate (1.98x) diverge substantially due to the
+per-transaction amounts' heavy right tail even after summing ~60 transactions — always compare
+median-to-median or mean-to-mean, never mix the two. P2M/P2P split via independent per-transaction
+Bernoulli(p=0.635), not a fixed ratio per applicant (0.635 is a national volume-share aggregate, not
+a documented individual trait). Both count dispersion and split are deliberately independent of
+income/region tier for now — correlation is deferred to the merge step, not skipped.
+
+**Per-transaction rows**: `generate_upi_transactions()` composes the above directly — **not SDV**,
+despite that being the original plan here. No real UPI microdata exists to fit an SDV synthesizer
+*to*; every distribution above is calibrated or income-anchored, not learned from rows, so SDV would
+only add approximation error on top of generators that are already exact. Revisit if a real
+correlation-structure reference dataset ever surfaces for the deferred income/region-tier merge.
+Generated and saved: **18,451,776 rows** (all 307,505 `train_fe` applicants, ~60 txns/applicant avg)
+→ `data/synthetic/upi_transactions.parquet` (92.3 MB). Columns: `SK_ID_CURR`, `TXN_TYPE`
+(P2M/P2P), `AMOUNT`, `MONTH_INDEX` (1..3, uniform-random within window).
+
+Full derivation, diagnosis, and validation for all of the above: `notebooks/03_synthetic_upi.ipynb`.
 
 ## Cell 2 pipeline (current order)
 ```python
@@ -164,6 +222,20 @@ Column counts below are the current, post-row-drop-fix trace (307,505 base rows)
 20. `merge_credit_card_balance_features(df, cc_agg)` — 220,600 (71.74%) no CC record post-fix, confirmed. 286→304
 21. `drop_zero_variance_features(df)` — drops 9 exact-zero-variance `_nan` dummy columns + `FLAG_MOBIL` (near-constant, not exact-zero-variance — see Track A section above for the distinction). Wired in as the last step of Cell 2. 304→294
 
+## Functions implemented (`src/synthetic_upi.py`)
+Track B, all validated in `notebooks/03_synthetic_upi.ipynb` before being wired here (scratch → validate → commit, same as Track A). See the Track B section above for the full reasoning behind each fit/assumption.
+
+1. `fit_lognormal_mean_percentile(target_mean, target_pctile_value, pctile, root)` — generic closed-form 2-constraint log-normal solver.
+2. `fit_p2m_params(cap=None)` — P2M amount fit. `cap=None`: exact untruncated solve. `cap=<value>`: joint (mu, sigma) re-solve under truncation via `fsolve` (needed because P2M has two real constraints — a mu-only re-solve breaks p86).
+3. `truncated_lognormal_mean(mu, sigma, cap)`, `truncated_lognormal_percentile(mu, sigma, cap, p)` — shared truncated-distribution moment/percentile helpers.
+4. `fit_p2p_params(cap=100_000, target_mean=2812, sigma_p2m=None)` — P2P amount fit, shape borrowed from P2M, mu solved via `brentq` so the truncated mean hits the real ATS.
+5. `generate_p2m_amounts(n, cap=300_000, random_state=None)` / `generate_p2p_amounts(n, cap=100_000, random_state=None)` — sample + resample-above-cap (not clip, to avoid a point-mass spike at the cap).
+6. `fit_count_params(lam_month=20, n_months=3, var_mean_ratio=2.0)` — Negative Binomial parameters for total transaction count; λ is income-anchored (see Track B section), `var_mean_ratio` confirmed low-impact on downstream ratios (checked 1.5–3.0).
+7. `generate_transaction_counts(n_applicants, ...)` — draws per-applicant count, deliberately independent of income/region tier.
+8. `split_p2m_p2p_counts(counts, p_p2m=0.635, random_state=None)` — per-transaction Binomial split, not a fixed per-applicant ratio.
+9. `generate_applicant_turnover(n_applicants, ...)` — convenience wrapper (count → split → amounts → sum); used to income-anchor λ.
+10. `generate_upi_transactions(sk_id_curr, ...)` — full per-transaction row generator (the production entry point); returns one row per synthetic transaction, sorted by `SK_ID_CURR`. Not SDV — see Track B section above.
+
 ## Findings worth citing in the thesis
 - **Bimodal bureau_balance coverage**: at the bureau-line level (scoped to bureau.csv's applicant set, unaffected by the row-drop fix), of applicants with ≥1 bureau line, 56.00% (171,269) have 0% of their lines covered by balance history, 43.85% (134,108) have 100% covered, only ~0.15% in between. At the `train_fe` applicant level post-fix (N=307,505), 215,274 (70.01%) have no bureau_balance history at all — combining the 44,019 with no bureau record plus the ~171K with a bureau record but 0% balance coverage. This is an institutional reporting-switch effect, not per-line randomness — verified empirically, not assumed.
 - **CC utilization can legitimately exceed [0,1]**: `CC_UTILIZATION_MEAN` ranges -0.085 to 2.14, `_LAST` up to 11.78. Negative = overpayment; >1 = over-limit spending or a post-hoc credit limit reduction. Confirmed not a data error via spot check.
@@ -177,6 +249,8 @@ Column counts below are the current, post-row-drop-fix trace (307,505 base rows)
 6. Row-drop fix pasted into Cell 2 before `train_raw` existed (wrong insertion point) → crashed → cell reverted to clean form but the crash traceback was never cleared, and the kernel was never restarted afterward. Every downstream cell's displayed output was therefore stale (leftover from an earlier session), not reflecting the code as it actually stood — even though the *code* itself (once the fix was correctly repositioned) turned out fine. **Lesson: a notebook's stored output is not proof the current code was run. Check `execution_count` sequencing (should be gapless, ascending, no `null`s) before trusting any displayed shape/number, especially after this project's own history of skipped kernel restarts.**
 7. Two stale standalone cells outside Cell 2 (`add_ext_source_missing_flags`, `transform_amounts`) were silently re-invoking pipeline functions already called inside Cell 2. The `transform_amounts` one was non-idempotent and corrupted `AMT_INCOME_TOTAL_RAW` on its second call (overwrote true raw income with the already-capped value). Same root cause as bug #4 — leftover pre-consolidation cells still wired to mutate `train_fe` — caught by an audit pass, not by a crash, since neither produced an error.
 8. **Zero-variance check methodology trap**: `df.var(numeric_only=True) == 0` (the approach the notebook's own diagnostic cell originally used) reports **zero** constant columns even though 9 genuinely exist. `pd.get_dummies` produces `bool` dtype columns, and `numeric_only=True` / `select_dtypes(include='number')` silently excludes `bool` — so all 76 one-hot columns, including the true constants, never enter the variance calculation at all. Correct check: `df.nunique(dropna=False) == 1`, which is dtype-agnostic. Don't trust a "nothing is constant" result from a `.var()`-based check on a one-hot-encoded frame.
+9. **[Track B] Uncapped log-normal tail produces structurally impossible values at scale**: `generate_p2m_amounts`'s original `cap=None` design checked only that p99.9 (~₹61,170) sat under every published ceiling — true, but irrelevant, since a log-normal's tail is unbounded. At production scale (11.7M draws) the realized max was ₹1.24 crore, ~12x the highest cited P2M ceiling. Small-N validation runs (the initial N=20,000 check) didn't surface this — the bug only showed up once generation ran at the real target volume. **Lesson: percentile-level checks (p99, p99.9) don't bound the maximum of an unbounded distribution; a "does this look safe" check must include the actual max at production N, not just a tail percentile at a smaller validation N.**
+10. **[Track B] Fixing a truncated-mean constraint with only one free parameter can break a second, unrelated constraint**: re-solving P2M's mu alone (mirroring the P2P cap fix, which only had one real constraint) to hit the truncated mean broke the p86 constraint instead (drifted to ₹628 vs target ₹500 at cap=₹1L), because shifting mu shifts every percentile of the distribution together. Needed a joint (mu, sigma) re-solve instead. Caught by explicitly re-checking the *other* constraint after each candidate fix, not by assuming a fix for one target leaves everything else alone.
 
 ## Key numbers
 All post row-drop-fix (N=307,505), reprinted directly from the notebook's current stored outputs — nothing estimated. EDA-stage numbers (default rate, gender/region gaps, missingness) are computed on the full 307,511 pre-fix population and unaffected by the 6-row drop.
@@ -198,9 +272,26 @@ All post row-drop-fix (N=307,505), reprinted directly from the notebook's curren
 | Baseline RF AUC (diagnostic, feature-selection pass only) | 0.7535 — RandomForestClassifier(n_estimators=100, max_depth=8, class_weight='balanced'), median-imputed, 80/20 split, not a pipeline artifact |
 | **Current `train_fe` shape** | **(307505, 294)** — confirmed via clean Restart Kernel → Run All, zero errors, zero `_x`/`_y` duplicate columns, zero leftover diagnostic cells |
 
+### Track B key numbers
+All confirmed via direct execution in `notebooks/03_synthetic_upi.ipynb`, not estimated.
+
+| Metric | Value |
+|---|---|
+| P2M fit (untruncated) | mu=3.630972, sigma=2.391548 — exact solve, ATS=659/p86=500 |
+| P2M fit (cap=₹3,00,000, locked) | mu=3.530206, sigma=2.485975 — joint truncated re-solve |
+| P2M cap bug: pre-fix realized max (11.7M draws) | ₹1.24 crore (uncapped) → ₹2,99,918 (post-fix, full N) |
+| P2P fit (shape-borrowed, truncated-mean-corrected) | mu=5.753896, sigma=2.391548 (=P2M's untruncated sigma) |
+| P2P post-resample mean @ N=307,505 | 2,807.97 (target ATS 2,812) |
+| Blended ATS @ 0.635/0.365 mix | ₹1,444.84/txn |
+| Median monthly income (`AMT_INCOME_TOTAL`/12, row-drop applied) | ₹12,262.50 |
+| λ (income-anchored transaction count) | 20/month, n_months=3 (explicit default) |
+| Median monthly turnover ratio to median income @ λ=20 | 1.98x (mean-based estimate: 2.36x — don't mix the two) |
+| Full per-transaction generation | 18,451,776 rows, 307,505/307,505 applicants, ~60 txns/applicant avg |
+| Output file | `data/synthetic/upi_transactions.parquet` (92.3 MB) |
+
 ## What's left in Phase 2
 - **Track A: fully closed.** All six auxiliary tables merged, row-drop fix applied, stale cells removed, feature selection done. No outstanding items.
-- **Track B (in progress)**: gather RBI DPSS aggregate stats → define marginal distributions for synthetic UPI features → generate ~307K synthetic rows → validate against RBI aggregates → merge onto Home Credit applicants conditional on income/region tier → document the calibrated-not-learned limitation explicitly. Row generation is direct composition of the closed-form/income-anchored generators in `src/synthetic_upi.py`, **not SDV** — SDV's synthesizers all work by fitting a model to real sample data, and there is no real UPI microdata here to fit on (everything is calibrated to RBI aggregates or income-anchored instead); using it would mean fitting a synthesizer to a seed dataset generated from these same closed-form functions, which only adds approximation error for no benefit. Revisit SDV specifically if/when a real dataset with genuine joint structure (e.g. income/region correlated with payment behavior) is found for the still-deferred income/region-tier merge step — that correlation-learning scenario is what SDV is actually built for. See `notebooks/03_synthetic_upi.ipynb` for the full derivation.
+- **Track B (in progress)** — see the "🔶 Track B — in progress" section above for the full write-up (RBI stats, both amount fits incl. the P2M cap bug, count-mix/income-anchoring, per-transaction row generation, the SDV decision). Remaining: income/region-tier correlation injection, the merge onto `train_fe`, and documenting the calibrated-not-learned limitation in the thesis methodology.
 - **Optional/low-priority**: markdown section ordering in `02_feature_engineering.ipynb` is scrambled near the top (section "1" appears before section "0"; the credit_card_balance summary sits near the top instead of the end). Cosmetic only, flagged in an audit pass, not yet fixed — do only if there's spare time before review.
 
 ## After this file goes stale
