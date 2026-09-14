@@ -684,3 +684,104 @@ def drop_zero_variance_features(df):
     df = df.drop(columns=present)
     print(f"Dropped {len(present)} zero-variance/near-constant columns: {present}")
     return df
+
+def aggregate_upi_transactions(upi_df, n_months=3):
+    """
+    Aggregate the per-transaction synthetic UPI table (generate_upi_transactions,
+    src/synthetic_upi.py) to one row per SK_ID_CURR, for merging onto train_fe
+    via merge_upi_features. Track B behavioral features -- see CLAUDE.md's
+    Track B section for the full generation/calibration/income-correlation
+    methodology; this function only aggregates already-generated rows, it
+    introduces no new randomness or assumptions of its own beyond the choice
+    of summary stats below.
+
+    n_months MUST match whatever n_months was passed to generate_upi_transactions
+    (default 3, matching that function's own default). A month with ZERO
+    transactions for a given applicant produces no rows at all in upi_df, so
+    this function needs n_months explicitly to correctly zero-fill missing
+    months before computing volatility features -- a naive groupby would
+    silently drop a missing month instead of counting it as a zero-turnover
+    month, understating volatility.
+
+    UPI_TURNOVER-to-income ratio is DELIBERATELY NOT included here:
+    UPI_TURNOVER_* is itself generated as a function of AMT_INCOME_TOTAL (see
+    income_percentile_multiplier in synthetic_upi.py), so a precomputed ratio
+    feature would be largely circular/definitional rather than new information
+    -- it would let the model "discover" a relationship that was built into
+    the generator by construction. Exposing the raw components (count,
+    turnover) and letting the model/SHAP find whatever relationship exists is
+    the more honest choice; flag this as a methodology caveat regardless --
+    even the raw turnover carries some of that same income-derived signal.
+
+    Columns produced (all prefixed UPI_):
+        UPI_TXN_COUNT_TOTAL, UPI_TXN_COUNT_P2M, UPI_TXN_COUNT_P2P, UPI_P2M_SHARE
+        UPI_TURNOVER_TOTAL, UPI_TURNOVER_P2M, UPI_TURNOVER_P2P
+        UPI_AVG_TICKET_SIZE, UPI_MEDIAN_TICKET_SIZE, UPI_MAX_TICKET_SIZE
+        UPI_MONTHLY_TURNOVER_STD, UPI_MONTHLY_TURNOVER_CV, UPI_ACTIVE_MONTHS
+    """
+    overall = upi_df.groupby('SK_ID_CURR').agg(
+        UPI_TXN_COUNT_TOTAL=('AMOUNT', 'size'),
+        UPI_TURNOVER_TOTAL=('AMOUNT', 'sum'),
+        UPI_AVG_TICKET_SIZE=('AMOUNT', 'mean'),
+        UPI_MEDIAN_TICKET_SIZE=('AMOUNT', 'median'),
+        UPI_MAX_TICKET_SIZE=('AMOUNT', 'max'),
+    )
+
+    by_type_count = upi_df.groupby(['SK_ID_CURR', 'TXN_TYPE'], observed=True).size().unstack(fill_value=0)
+    by_type_count = by_type_count.reindex(columns=['P2M', 'P2P'], fill_value=0)
+    by_type_count.columns = [f'UPI_TXN_COUNT_{c}' for c in by_type_count.columns]
+
+    by_type_turnover = upi_df.groupby(['SK_ID_CURR', 'TXN_TYPE'], observed=True)['AMOUNT'].sum().unstack(fill_value=0)
+    by_type_turnover = by_type_turnover.reindex(columns=['P2M', 'P2P'], fill_value=0)
+    by_type_turnover.columns = [f'UPI_TURNOVER_{c}' for c in by_type_turnover.columns]
+
+    monthly_pivot = upi_df.pivot_table(index='SK_ID_CURR', columns='MONTH_INDEX', values='AMOUNT',
+                                        aggfunc='sum', fill_value=0)
+    monthly_pivot = monthly_pivot.reindex(columns=range(1, n_months + 1), fill_value=0)
+    monthly_std = monthly_pivot.std(axis=1).rename('UPI_MONTHLY_TURNOVER_STD')
+    monthly_mean = monthly_pivot.mean(axis=1)
+    monthly_cv = (monthly_std / monthly_mean.replace(0, np.nan)).fillna(0).rename('UPI_MONTHLY_TURNOVER_CV')
+    active_months = (monthly_pivot > 0).sum(axis=1).rename('UPI_ACTIVE_MONTHS')
+
+    agg = overall.join([by_type_count, by_type_turnover, monthly_std, monthly_cv, active_months])
+    agg['UPI_P2M_SHARE'] = agg['UPI_TXN_COUNT_P2M'] / agg['UPI_TXN_COUNT_TOTAL']
+
+    print(f"aggregate_upi_transactions: {len(agg):,} applicants, {agg.shape[1]} UPI features "
+          f"(from {len(upi_df):,} transaction rows)")
+    return agg.reset_index()
+
+def merge_upi_features(df, upi_agg):
+    """
+    Left-join Track B's aggregated synthetic UPI features (aggregate_upi_transactions)
+    onto train_fe by SK_ID_CURR.
+
+    Confirmed empirically (not assumed): all 307,505 row-drop-fixed train_fe
+    applicants have >=1 synthetic UPI transaction at the locked generation
+    defaults (lambda=20/month, n_months=3, income-correlated) -- so this merge
+    introduces ZERO new missingness at those settings, unlike every real Home
+    Credit auxiliary table (bureau, previous_application, etc.), which all
+    have a genuine applicant-coverage gap. fillna(0) is still applied
+    defensively to the count/turnover/active-months columns (never assumed --
+    same rule as every other fillna(0) in this pipeline) in case this is
+    re-run with different generation parameters that DO produce a
+    zero-transaction applicant. Ticket-size stats (avg/median/max) and
+    UPI_P2M_SHARE are deliberately left NaN in that case instead of 0 --
+    "average ticket size of zero transactions" isn't meaningfully zero.
+    """
+    before_cols = df.shape[1]
+    merged = df.merge(upi_agg, on='SK_ID_CURR', how='left')
+
+    upi_cols = [c for c in upi_agg.columns if c != 'SK_ID_CURR']
+    zero_fill_cols = [c for c in upi_cols if ('COUNT' in c) or ('TURNOVER' in c) or (c == 'UPI_ACTIVE_MONTHS')]
+    n_missing = merged[upi_cols[0]].isnull().sum()
+    if n_missing > 0:
+        print(f"NOTE: {n_missing} applicant(s) ({n_missing/len(merged)*100:.2f}%) have no synthetic "
+              f"UPI activity -- filling count/turnover/active-months with 0, leaving ticket-size "
+              f"stats and UPI_P2M_SHARE as NaN")
+        merged[zero_fill_cols] = merged[zero_fill_cols].fillna(0)
+    else:
+        print("0 applicants missing UPI features -- full coverage confirmed, as expected at "
+              "current generation defaults")
+
+    print(f"Shape: {before_cols} -> {merged.shape[1]} columns ({len(upi_cols)} UPI features added)")
+    return merged

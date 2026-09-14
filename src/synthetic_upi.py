@@ -279,6 +279,52 @@ def generate_p2p_amounts(n, cap=100_000, random_state=None):
     return samples
 
 
+def income_percentile_multiplier(income, lo=0.7, hi=1.3):
+    """
+    Per-applicant transaction-COUNT multiplier from income percentile rank,
+    for correlating UPI transaction frequency with AMT_INCOME_TOTAL. Applied
+    to lam_month (see generate_transaction_counts / generate_upi_transactions),
+    NOT to ticket-size amounts - RBI's ATS/percentile figures are national
+    aggregates with no income-conditional breakdown, so conditioning amounts
+    on income would be a wholly new unranked assumption with zero anchor;
+    frequency at least has the existing lam_month income-anchoring precedent
+    (fit_count_params) to extend.
+
+    multiplier(pctile) = lo + (hi - lo) * pctile, LINEAR in percentile rank
+    (continuous, not decile bins - avoids arbitrary bin edges). At pctile=0.5
+    this is exactly 1.0 for any lo/hi, so the population MEDIAN stays anchored
+    at the already-validated lam_month=20 / ~1.98x-median-income-ratio finding
+    (fit_count_params) by construction - this only redistributes count
+    WITHIN the population, it doesn't re-anchor it.
+
+    lo=0.7, hi=1.3 (+-30% at the extremes) is a FLAGGED, UNRANKED ASSUMPTION -
+    one level further than lam_month itself, since no RBI or NPCI source ties
+    individual income to individual transaction frequency at all. Chosen to be
+    modest enough not to push turnover-to-income ratios to implausible
+    extremes at the income tails (checked by decile in
+    notebooks/03_synthetic_upi.ipynb) while still giving a downstream model
+    real income-linked signal to find.
+
+    Deliberately NOT extended to REGION_RATING_CLIENT (or any other
+    Home Credit feature): the stats doc explicitly states RBI does not
+    publish district/region-tier transaction granularity at all - unlike
+    income, there is no calibration precedent to extend, so a region
+    multiplier would be pure invention. REGION_RATING_CLIENT is also a likely
+    audited attribute in this project's Phase 5 fairness audit; injecting a
+    synthetic region correlation into the data-generation step now would
+    predetermine that audit's findings rather than letting them emerge from
+    whatever the model actually learns from real features. Revisit only if a
+    real reference dataset surfaces tying region to payment behavior.
+
+    income: array-like, same length/order as the sk_id_curr passed to the
+    caller (positional alignment is the caller's responsibility - see
+    generate_upi_transactions).
+    """
+    income = np.asarray(income, dtype=float)
+    pctile = pd.Series(income).rank(pct=True, method="average").to_numpy()
+    return lo + (hi - lo) * pctile
+
+
 def fit_count_params(lam_month=20, n_months=3, var_mean_ratio=2.0):
     """
     Negative Binomial parameters (n, p in scipy/numpy convention: mean =
@@ -324,8 +370,12 @@ def fit_count_params(lam_month=20, n_months=3, var_mean_ratio=2.0):
     behavioral features; pass a different value to use a longer/shorter
     window.
 
-    Independent of income/region tier BY DESIGN at this stage - see
-    generate_transaction_counts.
+    lam_month may be a scalar (population-level, the default) OR an array of
+    per-applicant values (e.g. from lam_month=20*income_percentile_multiplier(...),
+    see generate_upi_transactions) - every line below is elementwise-safe for
+    an array lam_month; p_nb reduces to a constant (1/var_mean_ratio) regardless,
+    only n_nb varies per applicant, and rng.negative_binomial broadcasts an
+    array n against a scalar p natively.
     """
     mean_count = lam_month * n_months
     var_count = var_mean_ratio * mean_count
@@ -339,12 +389,13 @@ def generate_transaction_counts(n_applicants, lam_month=20, n_months=3, var_mean
     Draw each applicant's total transaction count (P2M+P2P combined) over
     n_months from the Negative Binomial fitted by fit_count_params.
 
-    Deliberately INDEPENDENT of any Home Credit applicant feature (income,
-    region tier, etc.) at this stage - no RBI source ties frequency to either,
-    so imposing a functional form now would stack an unranked assumption on
-    top of the already-flagged lam_month one. Correlation with income/region
-    tier is deferred to the SDV merge step in the Track B roadmap (CLAUDE.md),
-    which is the right place to inject that dependency structure, not here.
+    lam_month may be a scalar (independent of any applicant feature, the
+    default) or a per-applicant array (see income_percentile_multiplier /
+    generate_upi_transactions) to correlate count with income. Deliberately
+    NOT correlated with REGION_RATING_CLIENT or any other Home Credit feature
+    here - see income_percentile_multiplier's docstring for why region tier
+    specifically stays excluded (no RBI calibration precedent, and it's a
+    likely fairness-audit attribute downstream).
     """
     n_nb, p_nb = fit_count_params(lam_month=lam_month, n_months=n_months, var_mean_ratio=var_mean_ratio)
     rng = np.random.default_rng(random_state)
@@ -379,7 +430,8 @@ def split_p2m_p2p_counts(counts, p_p2m=0.635, random_state=None):
 
 
 def generate_applicant_turnover(n_applicants, lam_month=20, n_months=3, p_p2m=0.635,
-                                 var_mean_ratio=2.0, cap_p2m=300_000, cap_p2p=100_000, random_state=None):
+                                 var_mean_ratio=2.0, cap_p2m=300_000, cap_p2p=100_000,
+                                 income=None, income_lo=0.7, income_hi=1.3, random_state=None):
     """
     Convenience/validation wrapper: draw each applicant's total transaction
     count, split into P2M/P2P, sample amounts for each, and sum to a single
@@ -398,9 +450,19 @@ def generate_applicant_turnover(n_applicants, lam_month=20, n_months=3, p_p2m=0.
     the median turnover ratio is unchanged (both P2M constraints are
     re-solved to hit the same 659/500 targets under truncation, so aggregate
     behavior barely moves - only the impossible tail is removed).
+
+    income: optional, array-like aligned 1:1 with the n_applicants slots (same
+    convention as generate_upi_transactions). When given, per-applicant
+    lam_month is scaled by income_percentile_multiplier(income, income_lo,
+    income_hi) - see that function's docstring for the full reasoning. Used
+    here to produce the by-income-decile turnover-ratio validation table in
+    notebooks/03_synthetic_upi.ipynb before wiring the correlation into
+    generate_upi_transactions.
     """
     rng = np.random.default_rng(random_state)
-    counts = generate_transaction_counts(n_applicants, lam_month=lam_month, n_months=n_months,
+    lam_effective = (lam_month * income_percentile_multiplier(income, lo=income_lo, hi=income_hi)
+                      if income is not None else lam_month)
+    counts = generate_transaction_counts(n_applicants, lam_month=lam_effective, n_months=n_months,
                                           var_mean_ratio=var_mean_ratio, random_state=rng)
     n_p2m, n_p2p = split_p2m_p2p_counts(counts, p_p2m=p_p2m, random_state=rng)
 
@@ -418,11 +480,24 @@ def generate_applicant_turnover(n_applicants, lam_month=20, n_months=3, p_p2m=0.
 
 
 def generate_upi_transactions(sk_id_curr, lam_month=20, n_months=3, p_p2m=0.635,
-                               var_mean_ratio=2.0, cap_p2m=300_000, cap_p2p=100_000, random_state=None):
+                               var_mean_ratio=2.0, cap_p2m=300_000, cap_p2p=100_000,
+                               income=None, income_lo=0.7, income_hi=1.3, random_state=None):
     """
     Generate one row per synthetic UPI transaction for the given applicant IDs
     - the per-transaction table needed for the eventual merge onto train_fe
     (unlike generate_applicant_turnover, which only returns a summed total).
+
+    income: optional, array-like of AMT_INCOME_TOTAL values aligned 1:1 BY
+    POSITION with sk_id_curr (caller's responsibility - e.g. both pulled from
+    the same row-drop-fixed application_train.csv in the same order). When
+    given, each applicant's lam_month is scaled by
+    income_percentile_multiplier(income, income_lo, income_hi) before drawing
+    their transaction count, correlating UPI frequency with income while
+    leaving ticket-size amounts unconditional (see that function's docstring
+    for the full reasoning, including why REGION_RATING_CLIENT is deliberately
+    NOT correlated here). income=None (default) reproduces the original
+    income-INDEPENDENT behavior exactly - backward compatible with every
+    earlier validation in notebooks/03_synthetic_upi.ipynb.
 
     NOT built with SDV, despite CLAUDE.md's original Track B roadmap naming
     it. SDV's synthesizers (GaussianCopula, CTGAN, multi-table HMA) all work
@@ -463,7 +538,14 @@ def generate_upi_transactions(sk_id_curr, lam_month=20, n_months=3, p_p2m=0.635,
     n_applicants = len(sk_id_curr)
     rng = np.random.default_rng(random_state)
 
-    counts = generate_transaction_counts(n_applicants, lam_month=lam_month, n_months=n_months,
+    if income is not None:
+        income = np.asarray(income)
+        assert len(income) == n_applicants, "income must align 1:1 with sk_id_curr"
+        lam_effective = lam_month * income_percentile_multiplier(income, lo=income_lo, hi=income_hi)
+    else:
+        lam_effective = lam_month
+
+    counts = generate_transaction_counts(n_applicants, lam_month=lam_effective, n_months=n_months,
                                           var_mean_ratio=var_mean_ratio, random_state=rng)
     n_p2m, n_p2p = split_p2m_p2p_counts(counts, p_p2m=p_p2m, random_state=rng)
     n_zero = (counts == 0).sum()
