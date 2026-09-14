@@ -1,0 +1,1948 @@
+{
+  "model_auc": 0.7912667414650537,
+  "test_set_size": 61501,
+  "default_rate": 0.08073039462772963,
+  "decision_threshold": {
+    "t_star": 0.71,
+    "lgd": 0.55,
+    "margin": 0.15,
+    "cost_at_0.5": 1677194226.225,
+    "cost_at_t_star": 1304171763.975,
+    "cost_reduction_pct": 22.240862532039156,
+    "approval_rate_at_0.5": 0.7151591031040145,
+    "approval_rate_at_t_star": 0.9027983284824637,
+    "approved_default_rate_at_0.5": 0.03542277698201578,
+    "approved_default_rate_at_t_star": 0.0552743907930047,
+    "cost_sweep": [
+      {
+        "threshold": 0.01,
+        "fn_cost": 0.0,
+        "fp_cost": 5086249409.924999,
+        "total_cost": 5086249409.924999,
+        "n_fn": 0,
+        "n_fp": 56532,
+        "approval_rate": 6.503959285214875e-05,
+        "approved_default_rate": 0.0
+      },
+      {
+        "threshold": 0.02,
+        "fn_cost": 0.0,
+        "fp_cost": 5080334563.125,
+        "total_cost": 5080334563.125,
+        "n_fn": 0,
+        "n_fp": 56486,
+        "approval_rate": 0.0008129949106518593,
+        "approved_default_rate": 0.0
+      },
+      {
+        "threshold": 0.03,
+        "fn_cost": 0.0,
+        "fp_cost": 5065038994.275001,
+        "total_cost": 5065038994.275001,
+        "n_fn": 0,
+        "n_fp": 56333,
+        "approval_rate": 0.0033007593372465487,
+        "approved_default_rate": 0.0
+      },
+      {
+        "threshold": 0.04,
+        "fn_cost": 87595.20000000001,
+        "fp_cost": 5039053260.75,
+        "total_cost": 5039140855.95,
+        "n_fn": 1,
+        "n_fp": 56053,
+        "approval_rate": 0.007869790735109999,
+        "approved_default_rate": 0.002066115702479339
+      },
+      {
+        "threshold": 0.05,
+        "fn_cost": 557845.2000000001,
+        "fp_cost": 4994605713.6,
+        "total_cost": 4995163558.8,
+        "n_fn": 2,
+        "n_fp": 55589,
+        "approval_rate": 0.01543064340417229,
+        "approved_default_rate": 0.002107481559536354
+      },
+      {
+        "threshold": 0.06,
+        "fn_cost": 2413530.9000000004,
+        "fp_cost": 4944531447.450001,
+        "total_cost": 4946944978.35,
+        "n_fn": 9,
+        "n_fp": 55056,
+        "approval_rate": 0.02421098843921237,
+        "approved_default_rate": 0.006044325050369375
+      },
+      {
+        "threshold": 0.07,
+        "fn_cost": 4408380.9,
+        "fp_cost": 4880432106.9,
+        "total_cost": 4884840487.799999,
+        "n_fn": 14,
+        "n_fp": 54341,
+        "approval_rate": 0.03591811515259914,
+        "approved_default_rate": 0.006337709370755998
+      },
+      {
+        "threshold": 0.08,
+        "fn_cost": 7139427.075,
+        "fp_cost": 4806819969.075,
+        "total_cost": 4813959396.15,
+        "n_fn": 23,
+        "n_fp": 53539,
+        "approval_rate": 0.0491048926033723,
+        "approved_default_rate": 0.0076158940397350995
+      },
+      {
+        "threshold": 0.09,
+        "fn_cost": 11499624.675,
+        "fp_cost": 4723045723.125,
+        "total_cost": 4734545347.8,
+        "n_fn": 32,
+        "n_fp": 52671,
+        "approval_rate": 0.06336482333620591,
+        "approved_default_rate": 0.008211444701052091
+      },
+      {
+        "threshold": 0.1,
+        "fn_cost": 13277756.25,
+        "fp_cost": 4631224099.5,
+        "total_cost": 4644501855.75,
+        "n_fn": 37,
+        "n_fp": 51702,
+        "approval_rate": 0.07920196419570413,
+        "approved_default_rate": 0.007595976185588175
+      },
+      {
+        "threshold": 0.11,
+        "fn_cost": 17752227.075,
+        "fp_cost": 4531048258.05,
+        "total_cost": 4548800485.125,
+        "n_fn": 52,
+        "n_fp": 50619,
+        "approval_rate": 0.09705533243361897,
+        "approved_default_rate": 0.00871167699782208
+      },
+      {
+        "threshold": 0.12,
+        "fn_cost": 22638265.65,
+        "fp_cost": 4430500475.4,
+        "total_cost": 4453138741.049999,
+        "n_fn": 66,
+        "n_fp": 49548,
+        "approval_rate": 0.11469732199476432,
+        "approved_default_rate": 0.009356393535582649
+      },
+      {
+        "threshold": 0.13,
+        "fn_cost": 28843932.15,
+        "fp_cost": 4328405787.15,
+        "total_cost": 4357249719.299999,
+        "n_fn": 82,
+        "n_fp": 48473,
+        "approval_rate": 0.13243687094518788,
+        "approved_default_rate": 0.010067526089625536
+      },
+      {
+        "threshold": 0.14,
+        "fn_cost": 33618890.25,
+        "fp_cost": 4224718432.35,
+        "total_cost": 4258337322.6,
+        "n_fn": 95,
+        "n_fp": 47386,
+        "approval_rate": 0.1503227589795288,
+        "approved_default_rate": 0.010275824770146024
+      },
+      {
+        "threshold": 0.15,
+        "fn_cost": 41163180.300000004,
+        "fp_cost": 4121111299.95,
+        "total_cost": 4162274480.25,
+        "n_fn": 115,
+        "n_fp": 46252,
+        "approval_rate": 0.1690866815173737,
+        "approved_default_rate": 0.01105875564958169
+      },
+      {
+        "threshold": 0.16,
+        "fn_cost": 49830625.35000001,
+        "fp_cost": 4008964947.075,
+        "total_cost": 4058795572.4249997,
+        "n_fn": 142,
+        "n_fp": 45055,
+        "approval_rate": 0.1889887969301312,
+        "approved_default_rate": 0.012217155639679945
+      },
+      {
+        "threshold": 0.17,
+        "fn_cost": 57586285.35,
+        "fp_cost": 3903307897.05,
+        "total_cost": 3960894182.4,
+        "n_fn": 166,
+        "n_fp": 43940,
+        "approval_rate": 0.20750882099478057,
+        "approved_default_rate": 0.013007365616674503
+      },
+      {
+        "threshold": 0.18,
+        "fn_cost": 63112863.825,
+        "fp_cost": 3795350793.3,
+        "total_cost": 3858463657.125,
+        "n_fn": 184,
+        "n_fp": 42805,
+        "approval_rate": 0.22625648363441245,
+        "approved_default_rate": 0.013223140495867768
+      },
+      {
+        "threshold": 0.19,
+        "fn_cost": 74342297.7,
+        "fp_cost": 3690767956.5,
+        "total_cost": 3765110254.2,
+        "n_fn": 213,
+        "n_fp": 41658,
+        "approval_rate": 0.24537812393294417,
+        "approved_default_rate": 0.014114372804983103
+      },
+      {
+        "threshold": 0.2,
+        "fn_cost": 86822727.75,
+        "fp_cost": 3577452095.925,
+        "total_cost": 3664274823.675,
+        "n_fn": 243,
+        "n_fp": 40477,
+        "approval_rate": 0.2650688606689322,
+        "approved_default_rate": 0.014906146485093854
+      },
+      {
+        "threshold": 0.21,
+        "fn_cost": 96144629.625,
+        "fp_cost": 3464904452.175,
+        "total_cost": 3561049081.8,
+        "n_fn": 269,
+        "n_fp": 39299,
+        "approval_rate": 0.28464577811742897,
+        "approved_default_rate": 0.015366160173654747
+      },
+      {
+        "threshold": 0.22,
+        "fn_cost": 100946646.9,
+        "fp_cost": 3356482513.7250004,
+        "total_cost": 3457429160.6250005,
+        "n_fn": 290,
+        "n_fp": 38148,
+        "approval_rate": 0.3037023788231086,
+        "approved_default_rate": 0.015526287611093264
+      },
+      {
+        "threshold": 0.23,
+        "fn_cost": 114340015.35,
+        "fp_cost": 3252461692.05,
+        "total_cost": 3366801707.4,
+        "n_fn": 329,
+        "n_fp": 37046,
+        "approval_rate": 0.322254922684184,
+        "approved_default_rate": 0.01660023210050961
+      },
+      {
+        "threshold": 0.24,
+        "fn_cost": 126335241.45,
+        "fp_cost": 3149394923.4750004,
+        "total_cost": 3275730164.925,
+        "n_fn": 366,
+        "n_fp": 35971,
+        "approval_rate": 0.34033592949708136,
+        "approved_default_rate": 0.01748602551239788
+      },
+      {
+        "threshold": 0.25,
+        "fn_cost": 139589069.4,
+        "fp_cost": 3047299720.2,
+        "total_cost": 3186888789.6,
+        "n_fn": 406,
+        "n_fp": 34861,
+        "approval_rate": 0.35903481244207414,
+        "approved_default_rate": 0.01838684842172003
+      },
+      {
+        "threshold": 0.26,
+        "fn_cost": 157639281.52500004,
+        "fp_cost": 2949172515.9,
+        "total_cost": 3106811797.425,
+        "n_fn": 451,
+        "n_fp": 33830,
+        "approval_rate": 0.37653046291930214,
+        "approved_default_rate": 0.01947575247225461
+      },
+      {
+        "threshold": 0.27,
+        "fn_cost": 166432840.2,
+        "fp_cost": 2853322053.525,
+        "total_cost": 3019754893.725,
+        "n_fn": 478,
+        "n_fp": 32797,
+        "approval_rate": 0.3937659550251215,
+        "approved_default_rate": 0.019738200437709047
+      },
+      {
+        "threshold": 0.28,
+        "fn_cost": 177232391.32500002,
+        "fp_cost": 2758358185.425,
+        "total_cost": 2935590576.75,
+        "n_fn": 504,
+        "n_fp": 31771,
+        "approval_rate": 0.41087136794523665,
+        "approved_default_rate": 0.01994538762911077
+      },
+      {
+        "threshold": 0.29,
+        "fn_cost": 188257058.55,
+        "fp_cost": 2660298976.575,
+        "total_cost": 2848556035.125,
+        "n_fn": 535,
+        "n_fp": 30738,
+        "approval_rate": 0.4281718996439082,
+        "approved_default_rate": 0.020316712869783163
+      },
+      {
+        "threshold": 0.3,
+        "fn_cost": 206146071.45,
+        "fp_cost": 2576880977.3999996,
+        "total_cost": 2783027048.8499994,
+        "n_fn": 585,
+        "n_fp": 29823,
+        "approval_rate": 0.44386270141948914,
+        "approved_default_rate": 0.021430141402300536
+      },
+      {
+        "threshold": 0.31,
+        "fn_cost": 216100833.3,
+        "fp_cost": 2495508324.75,
+        "total_cost": 2711609158.05,
+        "n_fn": 618,
+        "n_fp": 28884,
+        "approval_rate": 0.45966732248256126,
+        "approved_default_rate": 0.02186062964273081
+      },
+      {
+        "threshold": 0.32,
+        "fn_cost": 232452725.175,
+        "fp_cost": 2401988401.8,
+        "total_cost": 2634441126.9750004,
+        "n_fn": 666,
+        "n_fp": 27914,
+        "approval_rate": 0.47621989886343313,
+        "approved_default_rate": 0.02273968860966949
+      },
+      {
+        "threshold": 0.33,
+        "fn_cost": 242844871.5,
+        "fp_cost": 2317864698.9,
+        "total_cost": 2560709570.4,
+        "n_fn": 696,
+        "n_fp": 27010,
+        "approval_rate": 0.49140664379440985,
+        "approved_default_rate": 0.02302958109986103
+      },
+      {
+        "threshold": 0.34,
+        "fn_cost": 254156569.425,
+        "fp_cost": 2239832402.55,
+        "total_cost": 2493988971.9750004,
+        "n_fn": 733,
+        "n_fp": 26137,
+        "approval_rate": 0.5062031511682736,
+        "approved_default_rate": 0.023544905563407426
+      },
+      {
+        "threshold": 0.35,
+        "fn_cost": 268832346.75,
+        "fp_cost": 2150213162.175,
+        "total_cost": 2419045508.925,
+        "n_fn": 780,
+        "n_fp": 25186,
+        "approval_rate": 0.5224305295848848,
+        "approved_default_rate": 0.02427637721755369
+      },
+      {
+        "threshold": 0.36,
+        "fn_cost": 285557753.25,
+        "fp_cost": 2069854203.6,
+        "total_cost": 2355411956.85,
+        "n_fn": 827,
+        "n_fp": 24326,
+        "approval_rate": 0.5371782572641095,
+        "approved_default_rate": 0.02503253927414717
+      },
+      {
+        "threshold": 0.37,
+        "fn_cost": 295791987.15,
+        "fp_cost": 1994005661.175,
+        "total_cost": 2289797648.325,
+        "n_fn": 863,
+        "n_fp": 23475,
+        "approval_rate": 0.5516007869790736,
+        "approved_default_rate": 0.02543921707345832
+      },
+      {
+        "threshold": 0.38,
+        "fn_cost": 309511204.2,
+        "fp_cost": 1923503848.425,
+        "total_cost": 2233015052.625,
+        "n_fn": 901,
+        "n_fp": 22695,
+        "approval_rate": 0.5649013837173379,
+        "approved_default_rate": 0.025934027977663924
+      },
+      {
+        "threshold": 0.39,
+        "fn_cost": 325287881.32500005,
+        "fp_cost": 1848028846.9499998,
+        "total_cost": 2173316728.2749996,
+        "n_fn": 939,
+        "n_fp": 21857,
+        "approval_rate": 0.5791450545519585,
+        "approved_default_rate": 0.026363074849795047
+      },
+      {
+        "threshold": 0.4,
+        "fn_cost": 343999824.29999995,
+        "fp_cost": 1776351949.65,
+        "total_cost": 2120351773.95,
+        "n_fn": 996,
+        "n_fp": 21070,
+        "approval_rate": 0.5928684086437619,
+        "approved_default_rate": 0.027316109922659208
+      },
+      {
+        "threshold": 0.41,
+        "fn_cost": 357374036.25,
+        "fp_cost": 1704531123.4499998,
+        "total_cost": 2061905159.6999998,
+        "n_fn": 1036,
+        "n_fp": 20282,
+        "approval_rate": 0.6063316043641567,
+        "approved_default_rate": 0.0277822472512738
+      },
+      {
+        "threshold": 0.42,
+        "fn_cost": 374351954.62500006,
+        "fp_cost": 1629668741.1750002,
+        "total_cost": 2004020695.8000002,
+        "n_fn": 1095,
+        "n_fp": 19459,
+        "approval_rate": 0.6206728345880554,
+        "approved_default_rate": 0.028685947815152466
+      },
+      {
+        "threshold": 0.43,
+        "fn_cost": 390135086.55,
+        "fp_cost": 1564916228.1,
+        "total_cost": 1955051314.6499999,
+        "n_fn": 1144,
+        "n_fp": 18746,
+        "approval_rate": 0.6330628770263899,
+        "approved_default_rate": 0.0293830585092721
+      },
+      {
+        "threshold": 0.44,
+        "fn_cost": 411472163.025,
+        "fp_cost": 1500403911.75,
+        "total_cost": 1911876074.775,
+        "n_fn": 1213,
+        "n_fp": 18022,
+        "approval_rate": 0.6459569763093284,
+        "approved_default_rate": 0.030533390389407708
+      },
+      {
+        "threshold": 0.45,
+        "fn_cost": 427395674.475,
+        "fp_cost": 1437700239.0,
+        "total_cost": 1865095913.475,
+        "n_fn": 1263,
+        "n_fp": 17318,
+        "approval_rate": 0.6582169395619584,
+        "approved_default_rate": 0.031199822138781155
+      },
+      {
+        "threshold": 0.46,
+        "fn_cost": 448804181.925,
+        "fp_cost": 1376609249.25,
+        "total_cost": 1825413431.175,
+        "n_fn": 1331,
+        "n_fp": 16643,
+        "approval_rate": 0.670298043934245,
+        "approved_default_rate": 0.03228701727149234
+      },
+      {
+        "threshold": 0.47,
+        "fn_cost": 468625635.225,
+        "fp_cost": 1318395763.5749998,
+        "total_cost": 1787021398.7999997,
+        "n_fn": 1391,
+        "n_fp": 15986,
+        "approval_rate": 0.6819563909529927,
+        "approved_default_rate": 0.0331656374430748
+      },
+      {
+        "threshold": 0.48,
+        "fn_cost": 487227099.15,
+        "fp_cost": 1261573538.625,
+        "total_cost": 1748800637.775,
+        "n_fn": 1445,
+        "n_fp": 15360,
+        "approval_rate": 0.6930131217378579,
+        "approved_default_rate": 0.033903474812885664
+      },
+      {
+        "threshold": 0.49,
+        "fn_cost": 507215491.20000005,
+        "fp_cost": 1204540255.3500001,
+        "total_cost": 1711755746.5500002,
+        "n_fn": 1509,
+        "n_fp": 14719,
+        "approval_rate": 0.7044763499780491,
+        "approved_default_rate": 0.03482897105664035
+      },
+      {
+        "threshold": 0.5,
+        "fn_cost": 524901108.6,
+        "fp_cost": 1152293117.625,
+        "total_cost": 1677194226.225,
+        "n_fn": 1558,
+        "n_fp": 14111,
+        "approval_rate": 0.7151591031040145,
+        "approved_default_rate": 0.03542277698201578
+      },
+      {
+        "threshold": 0.51,
+        "fn_cost": 543142328.85,
+        "fp_cost": 1095210366.3,
+        "total_cost": 1638352695.15,
+        "n_fn": 1616,
+        "n_fp": 13476,
+        "approval_rate": 0.7264272125656493,
+        "approved_default_rate": 0.0361715462440684
+      },
+      {
+        "threshold": 0.52,
+        "fn_cost": 560941209.6750001,
+        "fp_cost": 1043788556.475,
+        "total_cost": 1604729766.15,
+        "n_fn": 1673,
+        "n_fp": 12882,
+        "approval_rate": 0.7370124063023366,
+        "approved_default_rate": 0.0369095682485053
+      },
+      {
+        "threshold": 0.53,
+        "fn_cost": 581074074.9000001,
+        "fp_cost": 990355573.3499999,
+        "total_cost": 1571429648.25,
+        "n_fn": 1733,
+        "n_fp": 12280,
+        "approval_rate": 0.7477764589193672,
+        "approved_default_rate": 0.03768292417752071
+      },
+      {
+        "threshold": 0.54,
+        "fn_cost": 607119457.725,
+        "fp_cost": 945559093.725,
+        "total_cost": 1552678551.45,
+        "n_fn": 1816,
+        "n_fp": 11749,
+        "approval_rate": 0.757760036422172,
+        "approved_default_rate": 0.03896744844752484
+      },
+      {
+        "threshold": 0.55,
+        "fn_cost": 624077692.425,
+        "fp_cost": 896711102.0999999,
+        "total_cost": 1520788794.5249999,
+        "n_fn": 1878,
+        "n_fp": 11186,
+        "approval_rate": 0.7679224728053202,
+        "approved_default_rate": 0.0397645464554925
+      },
+      {
+        "threshold": 0.56,
+        "fn_cost": 643842787.5,
+        "fp_cost": 849169213.875,
+        "total_cost": 1493012001.375,
+        "n_fn": 1941,
+        "n_fp": 10615,
+        "approval_rate": 0.7782312482723858,
+        "approved_default_rate": 0.040554093017425095
+      },
+      {
+        "threshold": 0.57,
+        "fn_cost": 663796920.6,
+        "fp_cost": 803845279.8,
+        "total_cost": 1467642200.4,
+        "n_fn": 2002,
+        "n_fp": 10094,
+        "approval_rate": 0.7876945090323735,
+        "approved_default_rate": 0.041326067211625794
+      },
+      {
+        "threshold": 0.58,
+        "fn_cost": 678863045.0250001,
+        "fp_cost": 759274473.6,
+        "total_cost": 1438137518.625,
+        "n_fn": 2050,
+        "n_fp": 9569,
+        "approval_rate": 0.7970114307084437,
+        "approved_default_rate": 0.04182222494236693
+      },
+      {
+        "threshold": 0.59,
+        "fn_cost": 700788523.05,
+        "fp_cost": 718908178.275,
+        "total_cost": 1419696701.3249998,
+        "n_fn": 2117,
+        "n_fp": 9082,
+        "approval_rate": 0.8060194143184664,
+        "approved_default_rate": 0.04270642109297775
+      },
+      {
+        "threshold": 0.6,
+        "fn_cost": 728556830.1000001,
+        "fp_cost": 676486982.475,
+        "total_cost": 1405043812.5750003,
+        "n_fn": 2202,
+        "n_fp": 8560,
+        "approval_rate": 0.8158891725337799,
+        "approved_default_rate": 0.04388377376539519
+      },
+      {
+        "threshold": 0.61,
+        "fn_cost": 753069923.1,
+        "fp_cost": 637622628.3000001,
+        "total_cost": 1390692551.4,
+        "n_fn": 2280,
+        "n_fp": 8074,
+        "approval_rate": 0.8250597551259329,
+        "approved_default_rate": 0.044933191439044576
+      },
+      {
+        "threshold": 0.62,
+        "fn_cost": 776745971.1,
+        "fp_cost": 599776674.9749999,
+        "total_cost": 1376522646.0749998,
+        "n_fn": 2349,
+        "n_fp": 7623,
+        "approval_rate": 0.8335149021967122,
+        "approved_default_rate": 0.04582341695602981
+      },
+      {
+        "threshold": 0.63,
+        "fn_cost": 799248693.375,
+        "fp_cost": 560612807.775,
+        "total_cost": 1359861501.15,
+        "n_fn": 2429,
+        "n_fp": 7147,
+        "approval_rate": 0.8425554056031609,
+        "approved_default_rate": 0.04687560307229148
+      },
+      {
+        "threshold": 0.64,
+        "fn_cost": 820884054.3750001,
+        "fp_cost": 526639257.225,
+        "total_cost": 1347523311.6000001,
+        "n_fn": 2501,
+        "n_fp": 6724,
+        "approval_rate": 0.8506040552186144,
+        "approved_default_rate": 0.047808384149255444
+      },
+      {
+        "threshold": 0.65,
+        "fn_cost": 847241579.25,
+        "fp_cost": 492374220.075,
+        "total_cost": 1339615799.325,
+        "n_fn": 2583,
+        "n_fp": 6320,
+        "approval_rate": 0.8585063657501504,
+        "approved_default_rate": 0.048921381086763006
+      },
+      {
+        "threshold": 0.66,
+        "fn_cost": 870361578.9,
+        "fp_cost": 456774371.775,
+        "total_cost": 1327135950.675,
+        "n_fn": 2658,
+        "n_fp": 5899,
+        "approval_rate": 0.8665712752638168,
+        "approved_default_rate": 0.049873346467773715
+      },
+      {
+        "threshold": 0.67,
+        "fn_cost": 890260546.725,
+        "fp_cost": 426402414.0,
+        "total_cost": 1316662960.725,
+        "n_fn": 2722,
+        "n_fp": 5503,
+        "approval_rate": 0.8740508284418139,
+        "approved_default_rate": 0.05063715003255511
+      },
+      {
+        "threshold": 0.68,
+        "fn_cost": 915855850.8000001,
+        "fp_cost": 394277714.1,
+        "total_cost": 1310133564.9,
+        "n_fn": 2809,
+        "n_fp": 5117,
+        "approval_rate": 0.8817417602965806,
+        "approved_default_rate": 0.05179980821715719
+      },
+      {
+        "threshold": 0.69,
+        "fn_cost": 941663103.975,
+        "fp_cost": 366538973.175,
+        "total_cost": 1308202077.15,
+        "n_fn": 2892,
+        "n_fp": 4756,
+        "approval_rate": 0.8889611551031691,
+        "approved_default_rate": 0.0528972783143108
+      },
+      {
+        "threshold": 0.7,
+        "fn_cost": 967863199.05,
+        "fp_cost": 338467684.725,
+        "total_cost": 1306330883.775,
+        "n_fn": 2982,
+        "n_fp": 4423,
+        "approval_rate": 0.8958390920472837,
+        "approved_default_rate": 0.05412469371086306
+      },
+      {
+        "threshold": 0.71,
+        "fn_cost": 993110597.325,
+        "fp_cost": 311061166.65,
+        "total_cost": 1304171763.975,
+        "n_fn": 3069,
+        "n_fp": 4082,
+        "approval_rate": 0.9027983284824637,
+        "approved_default_rate": 0.0552743907930047
+      },
+      {
+        "threshold": 0.72,
+        "fn_cost": 1018381795.2,
+        "fp_cost": 286855744.275,
+        "total_cost": 1305237539.475,
+        "n_fn": 3155,
+        "n_fp": 3767,
+        "approval_rate": 0.9093185476658916,
+        "approved_default_rate": 0.05641585008225449
+      },
+      {
+        "threshold": 0.73,
+        "fn_cost": 1047249700.2,
+        "fp_cost": 261877851.9,
+        "total_cost": 1309127552.1000001,
+        "n_fn": 3251,
+        "n_fp": 3449,
+        "approval_rate": 0.916050145526089,
+        "approved_default_rate": 0.05770527885263942
+      },
+      {
+        "threshold": 0.74,
+        "fn_cost": 1072671751.8,
+        "fp_cost": 238958988.97500002,
+        "total_cost": 1311630740.775,
+        "n_fn": 3346,
+        "n_fp": 3159,
+        "approval_rate": 0.9223102063381083,
+        "approved_default_rate": 0.05898841739682316
+      },
+      {
+        "threshold": 0.75,
+        "fn_cost": 1099529343.0,
+        "fp_cost": 219005995.725,
+        "total_cost": 1318535338.725,
+        "n_fn": 3430,
+        "n_fp": 2887,
+        "approval_rate": 0.9280987301019495,
+        "approved_default_rate": 0.06009215298095622
+      },
+      {
+        "threshold": 0.76,
+        "fn_cost": 1123460692.2,
+        "fp_cost": 195002303.85,
+        "total_cost": 1318462996.05,
+        "n_fn": 3511,
+        "n_fp": 2597,
+        "approval_rate": 0.9341311523389864,
+        "approved_default_rate": 0.061114012184508265
+      },
+      {
+        "threshold": 0.77,
+        "fn_cost": 1147250689.2000003,
+        "fp_cost": 175159737.225,
+        "total_cost": 1322410426.4250002,
+        "n_fn": 3591,
+        "n_fp": 2332,
+        "approval_rate": 0.9397408172224841,
+        "approved_default_rate": 0.06213340254347262
+      },
+      {
+        "threshold": 0.78,
+        "fn_cost": 1171137072.6000001,
+        "fp_cost": 153678476.475,
+        "total_cost": 1324815549.075,
+        "n_fn": 3668,
+        "n_fp": 2064,
+        "approval_rate": 0.945350482105982,
+        "approved_default_rate": 0.0630890952872377
+      },
+      {
+        "threshold": 0.79,
+        "fn_cost": 1194543286.2000003,
+        "fp_cost": 136021941.9,
+        "total_cost": 1330565228.1000004,
+        "n_fn": 3751,
+        "n_fp": 1836,
+        "approval_rate": 0.9504073104502366,
+        "approved_default_rate": 0.06417341020683992
+      },
+      {
+        "threshold": 0.8,
+        "fn_cost": 1226674894.5,
+        "fp_cost": 118953727.19999999,
+        "total_cost": 1345628621.7,
+        "n_fn": 3864,
+        "n_fp": 1607,
+        "approval_rate": 0.9559681956390953,
+        "approved_default_rate": 0.06572210977497321
+      },
+      {
+        "threshold": 0.81,
+        "fn_cost": 1253116858.95,
+        "fp_cost": 104428913.17500001,
+        "total_cost": 1357545772.125,
+        "n_fn": 3954,
+        "n_fp": 1421,
+        "approval_rate": 0.9604559275458936,
+        "approved_default_rate": 0.06693866495115881
+      },
+      {
+        "threshold": 0.82,
+        "fn_cost": 1274921136.2250001,
+        "fp_cost": 91102506.3,
+        "total_cost": 1366023642.525,
+        "n_fn": 4038,
+        "n_fp": 1235,
+        "approval_rate": 0.9648461000634136,
+        "approved_default_rate": 0.0680496806484774
+      },
+      {
+        "threshold": 0.83,
+        "fn_cost": 1299053747.475,
+        "fp_cost": 77783756.625,
+        "total_cost": 1376837504.1,
+        "n_fn": 4121,
+        "n_fp": 1061,
+        "approval_rate": 0.9690248939041641,
+        "approved_default_rate": 0.06914893617021277
+      },
+      {
+        "threshold": 0.84,
+        "fn_cost": 1322641616.1750002,
+        "fp_cost": 66999177.0,
+        "total_cost": 1389640793.1750002,
+        "n_fn": 4208,
+        "n_fp": 920,
+        "approval_rate": 0.9727321506967367,
+        "approved_default_rate": 0.0703396630115004
+      },
+      {
+        "threshold": 0.85,
+        "fn_cost": 1349139302.775,
+        "fp_cost": 56377450.575,
+        "total_cost": 1405516753.3500001,
+        "n_fn": 4304,
+        "n_fp": 769,
+        "approval_rate": 0.9767483455553568,
+        "approved_default_rate": 0.07164854921676017
+      },
+      {
+        "threshold": 0.86,
+        "fn_cost": 1369888240.05,
+        "fp_cost": 46067766.525,
+        "total_cost": 1415956006.575,
+        "n_fn": 4382,
+        "n_fp": 639,
+        "approval_rate": 0.9801304043836686,
+        "approved_default_rate": 0.07269530018746163
+      },
+      {
+        "threshold": 0.87,
+        "fn_cost": 1390650042.375,
+        "fp_cost": 36892197.9,
+        "total_cost": 1427542240.275,
+        "n_fn": 4458,
+        "n_fp": 506,
+        "approval_rate": 0.9835287231101933,
+        "approved_default_rate": 0.07370056870784288
+      },
+      {
+        "threshold": 0.88,
+        "fn_cost": 1412398419.3,
+        "fp_cost": 28737597.825,
+        "total_cost": 1441136017.125,
+        "n_fn": 4531,
+        "n_fp": 402,
+        "approval_rate": 0.9864067250939009,
+        "approved_default_rate": 0.07468886507871095
+      },
+      {
+        "threshold": 0.89,
+        "fn_cost": 1432710573.525,
+        "fp_cost": 20713056.75,
+        "total_cost": 1453423630.275,
+        "n_fn": 4608,
+        "n_fp": 291,
+        "approval_rate": 0.9894635859579519,
+        "approved_default_rate": 0.07572346474290503
+      },
+      {
+        "threshold": 0.9,
+        "fn_cost": 1455714208.5750003,
+        "fp_cost": 15372454.049999999,
+        "total_cost": 1471086662.6250002,
+        "n_fn": 4687,
+        "n_fp": 219,
+        "approval_rate": 0.9919188305881205,
+        "approved_default_rate": 0.07683102747360829
+      },
+      {
+        "threshold": 0.91,
+        "fn_cost": 1466711796.825,
+        "fp_cost": 10490560.425,
+        "total_cost": 1477202357.25,
+        "n_fn": 4732,
+        "n_fp": 152,
+        "approval_rate": 0.9937399391879806,
+        "approved_default_rate": 0.07742653315007526
+      },
+      {
+        "threshold": 0.92,
+        "fn_cost": 1482837065.3250003,
+        "fp_cost": 6859364.85,
+        "total_cost": 1489696430.1750002,
+        "n_fn": 4798,
+        "n_fp": 100,
+        "approval_rate": 0.9956586071771191,
+        "approved_default_rate": 0.0783551621648104
+      },
+      {
+        "threshold": 0.93,
+        "fn_cost": 1495810844.5500002,
+        "fp_cost": 3645369.9,
+        "total_cost": 1499456214.4500003,
+        "n_fn": 4848,
+        "n_fp": 53,
+        "approval_rate": 0.9972358173037836,
+        "approved_default_rate": 0.07904648546412092
+      },
+      {
+        "threshold": 0.94,
+        "fn_cost": 1510759802.4750001,
+        "fp_cost": 1824340.725,
+        "total_cost": 1512584143.2,
+        "n_fn": 4906,
+        "n_fp": 25,
+        "approval_rate": 0.9986341685501049,
+        "approved_default_rate": 0.07988016347265416
+      },
+      {
+        "threshold": 0.95,
+        "fn_cost": 1518182218.5750003,
+        "fp_cost": 628537.0499999999,
+        "total_cost": 1518810755.6250002,
+        "n_fn": 4931,
+        "n_fp": 9,
+        "approval_rate": 0.9993008243768394,
+        "approved_default_rate": 0.08023365550457223
+      },
+      {
+        "threshold": 0.96,
+        "fn_cost": 1523669679.6750002,
+        "fp_cost": 139854.59999999998,
+        "total_cost": 1523809534.275,
+        "n_fn": 4952,
+        "n_fp": 2,
+        "approval_rate": 0.9997561015268045,
+        "approved_default_rate": 0.08053865920697395
+      },
+      {
+        "threshold": 0.97,
+        "fn_cost": 1525430706.525,
+        "fp_cost": 0.0,
+        "total_cost": 1525430706.525,
+        "n_fn": 4961,
+        "n_fp": 0,
+        "approval_rate": 0.9999349604071478,
+        "approved_default_rate": 0.08067060181797486
+      },
+      {
+        "threshold": 0.98,
+        "fn_cost": 1526146971.5249999,
+        "fp_cost": 0.0,
+        "total_cost": 1526146971.5249999,
+        "n_fn": 4964,
+        "n_fp": 0,
+        "approval_rate": 0.9999837401017869,
+        "approved_default_rate": 0.08071544715447154
+      },
+      {
+        "threshold": 0.99,
+        "fn_cost": 1526446743.525,
+        "fp_cost": 0.0,
+        "total_cost": 1526446743.525,
+        "n_fn": 4965,
+        "n_fp": 0,
+        "approval_rate": 1.0,
+        "approved_default_rate": 0.08073039462772963
+      }
+    ],
+    "gender_at_0.5": {
+      "demographic_parity_difference": 0.13846880388617364,
+      "equalized_odds_difference": 0.13163009842586193,
+      "group_selection_rate": {
+        "false": 0.3759023556231003,
+        "true": 0.23743355173692668
+      },
+      "group_auc": {
+        "false": 0.7903764166906333,
+        "true": 0.7850815041383614
+      }
+    },
+    "gender_at_t_star": {
+      "demographic_parity_difference": 0.06574100146696271,
+      "equalized_odds_difference": 0.12087360985146356,
+      "group_selection_rate": {
+        "false": 0.14043503039513677,
+        "true": 0.07469402892817406
+      },
+      "group_auc": {
+        "false": 0.7903764166906333,
+        "true": 0.7850815041383614
+      }
+    },
+    "region_tier_at_0.5": {
+      "demographic_parity_difference": 0.2769222139899221,
+      "equalized_odds_difference": 0.25185648971655833,
+      "group_selection_rate": {
+        "1": 0.1436853650893137,
+        "2": 0.27606499780412824,
+        "3": 0.42060757907923585
+      },
+      "group_auc": {
+        "1": 0.7992178885597064,
+        "2": 0.7846874088663853,
+        "3": 0.789135243353281
+      }
+    },
+    "region_tier_at_t_star": {
+      "demographic_parity_difference": 0.13694645483668458,
+      "equalized_odds_difference": 0.3283364853339266,
+      "group_selection_rate": {
+        "1": 0.031651519899717956,
+        "2": 0.09137022397891963,
+        "3": 0.16859797473640253
+      },
+      "group_auc": {
+        "1": 0.7992178885597064,
+        "2": 0.7846874088663853,
+        "3": 0.789135243353281
+      }
+    }
+  },
+  "gender": {
+    "metrics": {
+      "demographic_parity_difference": 0.13846880388617364,
+      "equalized_odds_difference": 0.13163009842586193,
+      "group_selection_rate": {
+        "false": 0.3759023556231003,
+        "true": 0.23743355173692668
+      },
+      "group_auc": {
+        "false": 0.7903764166906333,
+        "true": 0.7850815041383614
+      }
+    },
+    "sweep": [
+      {
+        "threshold": 0.1,
+        "demographic_parity_difference": 0.04417365171133747,
+        "equalized_odds_difference": 0.044899639124076796
+      },
+      {
+        "threshold": 0.2,
+        "demographic_parity_difference": 0.11838515220677559,
+        "equalized_odds_difference": 0.11756312740241182
+      },
+      {
+        "threshold": 0.3,
+        "demographic_parity_difference": 0.1615482344310879,
+        "equalized_odds_difference": 0.15709426572235263
+      },
+      {
+        "threshold": 0.4,
+        "demographic_parity_difference": 0.1610040169564958,
+        "equalized_odds_difference": 0.1521152128703535
+      },
+      {
+        "threshold": 0.5,
+        "demographic_parity_difference": 0.13846880388617364,
+        "equalized_odds_difference": 0.13163009842586193
+      },
+      {
+        "threshold": 0.6,
+        "demographic_parity_difference": 0.10900213327716993,
+        "equalized_odds_difference": 0.14161975698610296
+      },
+      {
+        "threshold": 0.7,
+        "demographic_parity_difference": 0.06902445781749465,
+        "equalized_odds_difference": 0.12720070276741163
+      },
+      {
+        "threshold": 0.8,
+        "demographic_parity_difference": 0.03566571065776218,
+        "equalized_odds_difference": 0.08789660680203065
+      },
+      {
+        "threshold": 0.9,
+        "demographic_parity_difference": 0.006127128016545416,
+        "equalized_odds_difference": 0.020387741054588356
+      }
+    ],
+    "tpr_fpr": [
+      {
+        "group": "False",
+        "n": 21056,
+        "n_pos": 2129,
+        "n_neg": 18927,
+        "tpr": 0.7613903240958196,
+        "fpr": 0.33254081470914565
+      },
+      {
+        "group": "True",
+        "n": 40445,
+        "n_pos": 2836,
+        "n_neg": 37609,
+        "tpr": 0.6297602256699577,
+        "fpr": 0.20784918503549682
+      }
+    ],
+    "mitigation": {
+      "label": "Gender (full test set)",
+      "subset_size": 61501,
+      "privileged_value": "True",
+      "unprivileged_value": "False",
+      "accuracy_before": 0.7452236548999204,
+      "accuracy_after": 0.7050129266190793,
+      "before": {
+        "demographic_parity_difference": 0.13846880388617364,
+        "equalized_odds_difference": 0.13163009842586193,
+        "group_selection_rate": {
+          "false": 0.3759023556231003,
+          "true": 0.23743355173692668
+        },
+        "group_auc": {
+          "false": 0.714424754693337,
+          "true": 0.7109555203172304
+        }
+      },
+      "after": {
+        "demographic_parity_difference": 0.011700221857443849,
+        "equalized_odds_difference": 0.0065346173236672245,
+        "group_selection_rate": {
+          "false": 0.33040463525835867,
+          "true": 0.3187044134009148
+        },
+        "group_auc": {
+          "false": 0.6919202285769137,
+          "true": 0.6883014012003323
+        }
+      },
+      "tpr_fpr_before": [
+        {
+          "group": "False",
+          "n": 21056,
+          "n_pos": 2129,
+          "n_neg": 18927,
+          "tpr": 0.7613903240958196,
+          "fpr": 0.33254081470914565
+        },
+        {
+          "group": "True",
+          "n": 40445,
+          "n_pos": 2836,
+          "n_neg": 37609,
+          "tpr": 0.6297602256699577,
+          "fpr": 0.20784918503549682
+        }
+      ],
+      "tpr_fpr_after": [
+        {
+          "group": "False",
+          "n": 21056,
+          "n_pos": 2129,
+          "n_neg": 18927,
+          "tpr": 0.6754344762799437,
+          "fpr": 0.29159401912611616
+        },
+        {
+          "group": "True",
+          "n": 40445,
+          "n_pos": 2836,
+          "n_neg": 37609,
+          "tpr": 0.6688998589562765,
+          "fpr": 0.29229705655561167
+        }
+      ]
+    }
+  },
+  "region_tier": {
+    "metrics": {
+      "demographic_parity_difference": 0.2769222139899221,
+      "equalized_odds_difference": 0.25185648971655833,
+      "group_selection_rate": {
+        "1": 0.1436853650893137,
+        "2": 0.27606499780412824,
+        "3": 0.42060757907923585
+      },
+      "group_auc": {
+        "1": 0.7992178885597064,
+        "2": 0.7846874088663853,
+        "3": 0.789135243353281
+      }
+    },
+    "sweep": [
+      {
+        "threshold": 0.1,
+        "demographic_parity_difference": 0.13582287510065316,
+        "equalized_odds_difference": 0.1386761728032052
+      },
+      {
+        "threshold": 0.2,
+        "demographic_parity_difference": 0.2812024266103097,
+        "equalized_odds_difference": 0.27956555800976257
+      },
+      {
+        "threshold": 0.3,
+        "demographic_parity_difference": 0.32276522578296185,
+        "equalized_odds_difference": 0.3131546918303513
+      },
+      {
+        "threshold": 0.4,
+        "demographic_parity_difference": 0.30828583784733066,
+        "equalized_odds_difference": 0.2887925206919452
+      },
+      {
+        "threshold": 0.5,
+        "demographic_parity_difference": 0.2769222139899221,
+        "equalized_odds_difference": 0.25185648971655833
+      },
+      {
+        "threshold": 0.6,
+        "demographic_parity_difference": 0.20874020323301368,
+        "equalized_odds_difference": 0.2847647124262988
+      },
+      {
+        "threshold": 0.7,
+        "demographic_parity_difference": 0.1422163428179703,
+        "equalized_odds_difference": 0.3324804390551415
+      },
+      {
+        "threshold": 0.8,
+        "demographic_parity_difference": 0.07353913451055988,
+        "equalized_odds_difference": 0.25038009418919416
+      },
+      {
+        "threshold": 0.9,
+        "demographic_parity_difference": 0.017328986233956296,
+        "equalized_odds_difference": 0.08654095746653317
+      }
+    ],
+    "tpr_fpr": [
+      {
+        "group": "1",
+        "n": 6382,
+        "n_pos": 303,
+        "n_neg": 6079,
+        "tpr": 0.5478547854785478,
+        "fpr": 0.12354005593025169
+      },
+      {
+        "group": "3",
+        "n": 9579,
+        "n_pos": 1068,
+        "n_neg": 8511,
+        "tpr": 0.7808988764044944,
+        "fpr": 0.37539654564681
+      },
+      {
+        "group": "2",
+        "n": 45540,
+        "n_pos": 3594,
+        "n_neg": 41946,
+        "tpr": 0.6697273233166389,
+        "fpr": 0.24233538358842321
+      }
+    ],
+    "mitigations": {
+      "tier1_vs_tier3": {
+        "label": "Tier 1 vs Tier 3",
+        "subset_size": 15961,
+        "privileged_value": "1",
+        "unprivileged_value": "3",
+        "accuracy_before": 0.7295282250485559,
+        "accuracy_after": 0.6891798759476223,
+        "before": {
+          "demographic_parity_difference": 0.2769222139899221,
+          "equalized_odds_difference": 0.25185648971655833,
+          "group_selection_rate": {
+            "1": 0.1436853650893137,
+            "3": 0.42060757907923585
+          },
+          "group_auc": {
+            "1": 0.712157364774148,
+            "3": 0.7027511653788421
+          }
+        },
+        "after": {
+          "demographic_parity_difference": 0.021510414524826438,
+          "equalized_odds_difference": 0.005126636259131567,
+          "group_selection_rate": {
+            "1": 0.3252898777812598,
+            "3": 0.3468002923060862
+          },
+          "group_auc": {
+            "1": 0.6774637243293337,
+            "3": 0.6752601392249817
+          }
+        },
+        "tpr_fpr_before": [
+          {
+            "group": "1",
+            "n": 6382,
+            "n_pos": 303,
+            "n_neg": 6079,
+            "tpr": 0.5478547854785478,
+            "fpr": 0.12354005593025169
+          },
+          {
+            "group": "3",
+            "n": 9579,
+            "n_pos": 1068,
+            "n_neg": 8511,
+            "tpr": 0.7808988764044944,
+            "fpr": 0.37539654564681
+          }
+        ],
+        "tpr_fpr_after": [
+          {
+            "group": "1",
+            "n": 6382,
+            "n_pos": 303,
+            "n_neg": 6079,
+            "tpr": 0.6633663366336634,
+            "fpr": 0.3084388879749959
+          },
+          {
+            "group": "3",
+            "n": 9579,
+            "n_pos": 1068,
+            "n_neg": 8511,
+            "tpr": 0.6582397003745318,
+            "fpr": 0.3077194219245682
+          }
+        ]
+      },
+      "tier1_vs_tier2": {
+        "label": "Tier 1 vs Tier 2",
+        "subset_size": 51922,
+        "privileged_value": "1",
+        "unprivileged_value": "2",
+        "accuracy_before": 0.7642617772813066,
+        "accuracy_after": 0.7703478294364624,
+        "before": {
+          "demographic_parity_difference": 0.13237963271481454,
+          "equalized_odds_difference": 0.12187253783809104,
+          "group_selection_rate": {
+            "1": 0.1436853650893137,
+            "2": 0.27606499780412824
+          },
+          "group_auc": {
+            "1": 0.712157364774148,
+            "2": 0.7136959698641078
+          }
+        },
+        "after": {
+          "demographic_parity_difference": 0.012054269343111601,
+          "equalized_odds_difference": 0.0008209502085434472,
+          "group_selection_rate": {
+            "1": 0.2333124412409903,
+            "2": 0.2453667105841019
+          },
+          "group_auc": {
+            "1": 0.6893639684744919,
+            "2": 0.689730265329611
+          }
+        },
+        "tpr_fpr_before": [
+          {
+            "group": "1",
+            "n": 6382,
+            "n_pos": 303,
+            "n_neg": 6079,
+            "tpr": 0.5478547854785478,
+            "fpr": 0.12354005593025169
+          },
+          {
+            "group": "2",
+            "n": 45540,
+            "n_pos": 3594,
+            "n_neg": 41946,
+            "tpr": 0.6697273233166389,
+            "fpr": 0.24233538358842321
+          }
+        ],
+        "tpr_fpr_after": [
+          {
+            "group": "1",
+            "n": 6382,
+            "n_pos": 303,
+            "n_neg": 6079,
+            "tpr": 0.594059405940594,
+            "fpr": 0.21533146899161046
+          },
+          {
+            "group": "2",
+            "n": 45540,
+            "n_pos": 3594,
+            "n_neg": 41946,
+            "tpr": 0.5948803561491375,
+            "fpr": 0.21541982548991562
+          }
+        ]
+      },
+      "tier2_vs_tier3": {
+        "label": "Tier 2 vs Tier 3",
+        "subset_size": 55119,
+        "privileged_value": "2",
+        "unprivileged_value": "3",
+        "accuracy_before": 0.7318347575246286,
+        "accuracy_after": 0.6618588871351077,
+        "before": {
+          "demographic_parity_difference": 0.1445425812751076,
+          "equalized_odds_difference": 0.1330611620583868,
+          "group_selection_rate": {
+            "2": 0.27606499780412824,
+            "3": 0.42060757907923585
+          },
+          "group_auc": {
+            "2": 0.7136959698641078,
+            "3": 0.7027511653788421
+          }
+        },
+        "after": {
+          "demographic_parity_difference": 0.012094405017783638,
+          "equalized_odds_difference": 0.00867550786892013,
+          "group_selection_rate": {
+            "2": 0.3722880983750549,
+            "3": 0.3843825033928385
+          },
+          "group_auc": {
+            "2": 0.6845713946391206,
+            "3": 0.6894141619767676
+          }
+        },
+        "tpr_fpr_before": [
+          {
+            "group": "3",
+            "n": 9579,
+            "n_pos": 1068,
+            "n_neg": 8511,
+            "tpr": 0.7808988764044944,
+            "fpr": 0.37539654564681
+          },
+          {
+            "group": "2",
+            "n": 45540,
+            "n_pos": 3594,
+            "n_neg": 41946,
+            "tpr": 0.6697273233166389,
+            "fpr": 0.24233538358842321
+          }
+        ],
+        "tpr_fpr_after": [
+          {
+            "group": "3",
+            "n": 9579,
+            "n_pos": 1068,
+            "n_neg": 8511,
+            "tpr": 0.7209737827715356,
+            "fpr": 0.34214545881800024
+          },
+          {
+            "group": "2",
+            "n": 45540,
+            "n_pos": 3594,
+            "n_neg": 41946,
+            "tpr": 0.7122982749026154,
+            "fpr": 0.3431554856243742
+          }
+        ]
+      }
+    }
+  },
+  "education": {
+    "label_distribution": {
+      "Secondary / secondary special": 43776,
+      "Higher education": 14936,
+      "Incomplete higher": 1992,
+      "Lower secondary": 759,
+      "Academic degree": 38
+    },
+    "metrics_raw": {
+      "demographic_parity_difference": 0.2184262868079034,
+      "equalized_odds_difference": 0.7171486555048199,
+      "group_selection_rate": {
+        "Academic degree": 0.18421052631578946,
+        "Higher education": 0.1610203535083021,
+        "Incomplete higher": 0.3318273092369478,
+        "Lower secondary": 0.3794466403162055,
+        "Secondary / secondary special": 0.32339638157894735
+      },
+      "group_auc": {
+        "Academic degree": 0.7567567567567568,
+        "Higher education": 0.7895752305198822,
+        "Incomplete higher": 0.7727520435967302,
+        "Lower secondary": 0.765806823503981,
+        "Secondary / secondary special": 0.7868859215770818
+      }
+    },
+    "metrics_diagnosed": {
+      "demographic_parity_difference": 0.2184262868079034,
+      "equalized_odds_difference": 0.198986576432428,
+      "group_selection_rate": {
+        "Higher education": 0.1610203535083021,
+        "Incomplete higher": 0.3318273092369478,
+        "Lower secondary": 0.3794466403162055,
+        "Secondary / secondary special": 0.32339638157894735
+      },
+      "group_auc": {
+        "Higher education": 0.7895752305198822,
+        "Incomplete higher": 0.7727520435967302,
+        "Lower secondary": 0.765806823503981,
+        "Secondary / secondary special": 0.7868859215770818
+      }
+    },
+    "diagnosis_note": "Raw EOD is a small-sample artifact of 'Academic degree' (n=38, only 1 defaulter). metrics_diagnosed excludes that group.",
+    "tpr_fpr": [
+      {
+        "group": "Academic degree",
+        "n": 38,
+        "n_pos": 1,
+        "n_neg": 37,
+        "tpr": 0.0,
+        "fpr": 0.1891891891891892
+      },
+      {
+        "group": "Lower secondary",
+        "n": 759,
+        "n_pos": 82,
+        "n_neg": 677,
+        "tpr": 0.7073170731707317,
+        "fpr": 0.3397341211225997
+      },
+      {
+        "group": "Incomplete higher",
+        "n": 1992,
+        "n_pos": 157,
+        "n_neg": 1835,
+        "tpr": 0.6942675159235668,
+        "fpr": 0.3008174386920981
+      },
+      {
+        "group": "Higher education",
+        "n": 14936,
+        "n_pos": 783,
+        "n_neg": 14153,
+        "tpr": 0.5274584929757343,
+        "fpr": 0.1407475446901717
+      },
+      {
+        "group": "Secondary / secondary special",
+        "n": 43776,
+        "n_pos": 3942,
+        "n_neg": 39834,
+        "tpr": 0.7171486555048199,
+        "fpr": 0.28443038610232463
+      }
+    ],
+    "mitigation": {
+      "label": "Lower secondary vs Higher education",
+      "subset_size": 15695,
+      "privileged_value": "Higher education",
+      "unprivileged_value": "Lower secondary",
+      "accuracy_before": 0.8333227142402039,
+      "accuracy_after": 0.6994584262503982,
+      "before": {
+        "demographic_parity_difference": 0.2184262868079034,
+        "equalized_odds_difference": 0.198986576432428,
+        "group_selection_rate": {
+          "Higher education": 0.1610203535083021,
+          "Lower secondary": 0.3794466403162055
+        },
+        "group_auc": {
+          "Higher education": 0.6933554741427813,
+          "Lower secondary": 0.683791476024066
+        }
+      },
+      "after": {
+        "demographic_parity_difference": 0.018989762556516965,
+        "equalized_odds_difference": 0.013332087343861931,
+        "group_selection_rate": {
+          "Higher education": 0.3103910016068559,
+          "Lower secondary": 0.32938076416337286
+        },
+        "group_auc": {
+          "Higher education": 0.650928743609228,
+          "Lower secondary": 0.6571675613358793
+        }
+      },
+      "tpr_fpr_before": [
+        {
+          "group": "Lower secondary",
+          "n": 759,
+          "n_pos": 82,
+          "n_neg": 677,
+          "tpr": 0.7073170731707317,
+          "fpr": 0.3397341211225997
+        },
+        {
+          "group": "Higher education",
+          "n": 14936,
+          "n_pos": 783,
+          "n_neg": 14153,
+          "tpr": 0.5274584929757343,
+          "fpr": 0.1407475446901717
+        }
+      ],
+      "tpr_fpr_after": [
+        {
+          "group": "Lower secondary",
+          "n": 759,
+          "n_pos": 82,
+          "n_neg": 677,
+          "tpr": 0.6097560975609756,
+          "fpr": 0.29542097488921715
+        },
+        {
+          "group": "Higher education",
+          "n": 14936,
+          "n_pos": 783,
+          "n_neg": 14153,
+          "tpr": 0.5964240102171137,
+          "fpr": 0.29456652299865754
+        }
+      ]
+    }
+  },
+  "occupation": {
+    "label_distribution": {
+      "Not Reported": 19481,
+      "Laborers": 10940,
+      "Sales staff": 6485,
+      "Core staff": 5381,
+      "Managers": 4299,
+      "Drivers": 3764,
+      "High skill tech staff": 2292,
+      "Accountants": 1914,
+      "Medicine staff": 1668,
+      "Security staff": 1349,
+      "Cooking staff": 1216,
+      "Cleaning staff": 873,
+      "Private service staff": 521,
+      "Low-skill Laborers": 372,
+      "Secretaries": 287,
+      "Waiters/barmen staff": 249,
+      "Realty agents": 167,
+      "HR staff": 130,
+      "IT staff": 113
+    },
+    "metrics": {
+      "demographic_parity_difference": 0.47834293996696664,
+      "equalized_odds_difference": 0.45045879501385033,
+      "group_selection_rate": {
+        "Accountants": 0.1614420062695925,
+        "Cleaning staff": 0.3344788087056128,
+        "Cooking staff": 0.3930921052631579,
+        "Core staff": 0.20609552127857275,
+        "Drivers": 0.4261424017003188,
+        "HR staff": 0.17692307692307693,
+        "High skill tech staff": 0.20157068062827224,
+        "IT staff": 0.20353982300884957,
+        "Laborers": 0.4093235831809872,
+        "Low-skill Laborers": 0.6397849462365591,
+        "Managers": 0.17632007443591532,
+        "Medicine staff": 0.21642685851318944,
+        "Not Reported": 0.21200143729787999,
+        "Private service staff": 0.2053742802303263,
+        "Realty agents": 0.2754491017964072,
+        "Sales staff": 0.36530454895913644,
+        "Secretaries": 0.20905923344947736,
+        "Security staff": 0.4128984432913269,
+        "Waiters/barmen staff": 0.4578313253012048
+      },
+      "group_auc": {
+        "Accountants": 0.7898040610943098,
+        "Cleaning staff": 0.7106853980417198,
+        "Cooking staff": 0.813617700729927,
+        "Core staff": 0.7914768092367248,
+        "Drivers": 0.7655310840582985,
+        "HR staff": 0.8624,
+        "High skill tech staff": 0.7826442752437202,
+        "IT staff": 0.7357142857142858,
+        "Laborers": 0.789600107727477,
+        "Low-skill Laborers": 0.7527043269230769,
+        "Managers": 0.8028491232022831,
+        "Medicine staff": 0.8293078238799381,
+        "Not Reported": 0.77925927296491,
+        "Private service staff": 0.772615590797409,
+        "Realty agents": 0.7074592074592074,
+        "Sales staff": 0.7749113500509769,
+        "Secretaries": 0.7518518518518518,
+        "Security staff": 0.7802985125008439,
+        "Waiters/barmen staff": 0.7596486175115207
+      }
+    },
+    "tpr_fpr": [
+      {
+        "group": "HR staff",
+        "n": 130,
+        "n_pos": 5,
+        "n_neg": 125,
+        "tpr": 0.6,
+        "fpr": 0.16
+      },
+      {
+        "group": "IT staff",
+        "n": 113,
+        "n_pos": 8,
+        "n_neg": 105,
+        "tpr": 0.625,
+        "fpr": 0.17142857142857143
+      },
+      {
+        "group": "Realty agents",
+        "n": 167,
+        "n_pos": 11,
+        "n_neg": 156,
+        "tpr": 0.5454545454545454,
+        "fpr": 0.2564102564102564
+      },
+      {
+        "group": "Secretaries",
+        "n": 287,
+        "n_pos": 17,
+        "n_neg": 270,
+        "tpr": 0.5294117647058824,
+        "fpr": 0.18888888888888888
+      },
+      {
+        "group": "Waiters/barmen staff",
+        "n": 249,
+        "n_pos": 32,
+        "n_neg": 217,
+        "tpr": 0.8125,
+        "fpr": 0.4055299539170507
+      },
+      {
+        "group": "Private service staff",
+        "n": 521,
+        "n_pos": 37,
+        "n_neg": 484,
+        "tpr": 0.5405405405405406,
+        "fpr": 0.1797520661157025
+      },
+      {
+        "group": "Low-skill Laborers",
+        "n": 372,
+        "n_pos": 52,
+        "n_neg": 320,
+        "tpr": 0.9423076923076923,
+        "fpr": 0.590625
+      },
+      {
+        "group": "Cleaning staff",
+        "n": 873,
+        "n_pos": 90,
+        "n_neg": 783,
+        "tpr": 0.6222222222222222,
+        "fpr": 0.30140485312899107
+      },
+      {
+        "group": "Medicine staff",
+        "n": 1668,
+        "n_pos": 92,
+        "n_neg": 1576,
+        "tpr": 0.7065217391304348,
+        "fpr": 0.18781725888324874
+      },
+      {
+        "group": "Accountants",
+        "n": 1914,
+        "n_pos": 109,
+        "n_neg": 1805,
+        "tpr": 0.5137614678899083,
+        "fpr": 0.1401662049861496
+      },
+      {
+        "group": "Cooking staff",
+        "n": 1216,
+        "n_pos": 120,
+        "n_neg": 1096,
+        "tpr": 0.8,
+        "fpr": 0.34854014598540145
+      },
+      {
+        "group": "High skill tech staff",
+        "n": 2292,
+        "n_pos": 130,
+        "n_neg": 2162,
+        "tpr": 0.6153846153846154,
+        "fpr": 0.17668825161887142
+      },
+      {
+        "group": "Security staff",
+        "n": 1349,
+        "n_pos": 148,
+        "n_neg": 1201,
+        "tpr": 0.7635135135135135,
+        "fpr": 0.36969192339716905
+      },
+      {
+        "group": "Managers",
+        "n": 4299,
+        "n_pos": 264,
+        "n_neg": 4035,
+        "tpr": 0.5757575757575758,
+        "fpr": 0.15018587360594796
+      },
+      {
+        "group": "Core staff",
+        "n": 5381,
+        "n_pos": 328,
+        "n_neg": 5053,
+        "tpr": 0.5853658536585366,
+        "fpr": 0.18147635068276272
+      },
+      {
+        "group": "Drivers",
+        "n": 3764,
+        "n_pos": 424,
+        "n_neg": 3340,
+        "tpr": 0.75,
+        "fpr": 0.3850299401197605
+      },
+      {
+        "group": "Sales staff",
+        "n": 6485,
+        "n_pos": 634,
+        "n_neg": 5851,
+        "tpr": 0.7460567823343849,
+        "fpr": 0.3240471714236883
+      },
+      {
+        "group": "Laborers",
+        "n": 10940,
+        "n_pos": 1181,
+        "n_neg": 9759,
+        "tpr": 0.7874682472480948,
+        "fpr": 0.3635618403524951
+      },
+      {
+        "group": "Not Reported",
+        "n": 19481,
+        "n_pos": 1283,
+        "n_neg": 18198,
+        "tpr": 0.5908028059236166,
+        "fpr": 0.1852950873722387
+      }
+    ],
+    "mitigation": {
+      "label": "Low-skill Laborers vs Accountants",
+      "subset_size": 2286,
+      "privileged_value": "Accountants",
+      "unprivileged_value": "Low-skill Laborers",
+      "accuracy_before": 0.7821522309711286,
+      "accuracy_after": 0.5831146106736658,
+      "before": {
+        "demographic_parity_difference": 0.47834293996696664,
+        "equalized_odds_difference": 0.45045879501385033,
+        "group_selection_rate": {
+          "Accountants": 0.1614420062695925,
+          "Low-skill Laborers": 0.6397849462365591
+        },
+        "group_auc": {
+          "Accountants": 0.6867976314518793,
+          "Low-skill Laborers": 0.6758413461538462
+        }
+      },
+      "after": {
+        "demographic_parity_difference": 0.02125257019584048,
+        "equalized_odds_difference": 0.09191954834156668,
+        "group_selection_rate": {
+          "Accountants": 0.43573667711598746,
+          "Low-skill Laborers": 0.45698924731182794
+        },
+        "group_auc": {
+          "Accountants": 0.633787389768482,
+          "Low-skill Laborers": 0.5808894230769232
+        }
+      },
+      "tpr_fpr_before": [
+        {
+          "group": "Low-skill Laborers",
+          "n": 372,
+          "n_pos": 52,
+          "n_neg": 320,
+          "tpr": 0.9423076923076923,
+          "fpr": 0.590625
+        },
+        {
+          "group": "Accountants",
+          "n": 1914,
+          "n_pos": 109,
+          "n_neg": 1805,
+          "tpr": 0.5137614678899083,
+          "fpr": 0.1401662049861496
+        }
+      ],
+      "tpr_fpr_after": [
+        {
+          "group": "Low-skill Laborers",
+          "n": 372,
+          "n_pos": 52,
+          "n_neg": 320,
+          "tpr": 0.5961538461538461,
+          "fpr": 0.434375
+        },
+        {
+          "group": "Accountants",
+          "n": 1914,
+          "n_pos": 109,
+          "n_neg": 1805,
+          "tpr": 0.6880733944954128,
+          "fpr": 0.42049861495844876
+        }
+      ]
+    }
+  }
+}
